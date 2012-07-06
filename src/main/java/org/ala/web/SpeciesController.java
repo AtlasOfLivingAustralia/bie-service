@@ -115,7 +115,7 @@ public class SpeciesController {
     @Inject
     private FulltextSearchDao searchDao;
     /** Name of view for site home page */
-    private String HOME_PAGE = "homePage";
+    private String HOME_PAGE = "wsPage";
     /** Name of view for a single taxon */
     private final String SPECIES_SHOW = "species/show";
     /** Name of view for a single taxon */
@@ -416,7 +416,7 @@ public class SpeciesController {
         List<GuidLookupDTO> guids = new ArrayList<GuidLookupDTO>();
 
         if(lsid != null && lsid.length() > 0){
-            ExtendedTaxonConceptDTO etc = taxonConceptDao.getExtendedTaxonConceptByGuid(lsid);
+            ExtendedTaxonConceptDTO etc = taxonConceptDao.getExtendedTaxonConceptByGuid(lsid, true, true);
             if (etc.getTaxonConcept() != null && etc.getTaxonConcept().getGuid() != null) {
 
                 //FIXME - this should come straight from BIE with a the attribution
@@ -453,6 +453,29 @@ public class SpeciesController {
                         g.setInfoSourceURL(col.getWebsiteUrl());
                         g.setInfoSourceName(col.getName());
                         guids.add(g);
+                    }
+                }
+                if(!tc.getGuid().equals(lsid)){
+                    //we matched to a synonym locate the synonym
+                    List<SynonymConcept> synonyms =etc.getSynonyms();
+                    SynonymConcept matchedConcept =null;
+                    for(SynonymConcept s: synonyms){
+                       if(s.getGuid().equals(lsid)){
+                           matchedConcept = s;
+                           break;
+                       }                      
+                    }
+                    if(matchedConcept != null){
+                        GuidLookupDTO synonymGuid = new GuidLookupDTO();
+                        synonymGuid.setIdentifier(matchedConcept.getGuid());
+                        synonymGuid.setInfoSourceId(matchedConcept.getInfoSourceId());
+                        synonymGuid.setInfoSourceURL(matchedConcept.getInfoSourceURL());
+                        synonymGuid.setInfoSourceName(matchedConcept.getInfoSourceName());
+                        synonymGuid.setName(matchedConcept.getNameString());
+                        //include the current list as accepted guids for the name
+                        synonymGuid.setAccepted(guids.toArray(new GuidLookupDTO[]{}));
+                        guids.clear();
+                        guids.add(synonymGuid);
                     }
                 }
             }
@@ -898,16 +921,14 @@ public class SpeciesController {
             lsid = taxonConceptDao.findLsidByName(cl.getScientificName(), cl, null);
         }
         //check for a scientific name first - this will lookup in the name matching index.  This will produce the correct result in a majority of scientific name cases.
-        if(lsid == null || lsid.length() < 1){
-            try{
-                NameSearchResult nsr = taxonConceptDao.findCBDataByName(name, null, null);
-                //use the acceptedLsid if a synonym is returned
-                if(nsr != null)
-                    lsid =  nsr.isSynonym() ? nsr.getAcceptedLsid() : nsr.getLsid();
-            }
-            catch(Exception e){
-               //just let the other searches work
-            }
+        if (lsid == null || lsid.length() < 1) {
+            try {
+                NameSearchResult nsr = taxonConceptDao.findCBDataByName(name, null,null);
+                if (nsr != null)
+                  lsid = nsr.getLsid();
+            } catch (Exception e) {
+              // let the other searches do their thing
+            }     
         }
 
         if(lsid == null || lsid.length() < 1){

@@ -7,6 +7,7 @@ public class GuidLookupDTO {
     private String infoSourceId;
     private String identifier;
     private String name;
+    private GuidLookupDTO[] accepted;
     
 	/**
 	 * @return the infoSourceName
@@ -68,4 +69,20 @@ public class GuidLookupDTO {
 	public void setName(String name) {
 		this.name = name;
 	}
+  /**
+   * @return the acceptedLsid
+   */
+  /**
+   * @return the accepted
+   */
+  public GuidLookupDTO[] getAccepted() {
+    return accepted;
+  }
+  /**
+   * @param accepted the accepted to set
+   */
+  public void setAccepted(GuidLookupDTO[] accepted) {
+    this.accepted = accepted;
+  }
+
 }

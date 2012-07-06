@@ -2,13 +2,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>au.org.ala</groupId>
-    <artifactId>bie-webapp</artifactId>
+    <artifactId>bie-service</artifactId>
     <packaging>war</packaging>
     <version>1.0-SNAPSHOT</version>
-    <name>bie-webapp</name>
+    <name>bie-service</name>
     <url>http://www.ala.org.au</url>
     <description>
-        This is a Spring 3.0 MVC web application for the BIE project
+        This is the service layer for the BIE project
     </description>
     <properties>
         <!-- This project uses UTF8 for Regular Expressions -->
@@ -42,6 +42,14 @@
                 	<groupId>org.slf4j</groupId>
             		<artifactId>slf4j-jdk14</artifactId>
                 </exclusion>
+                <exclusion>
+                	<groupId>org.codehaus.jackson</groupId>
+            		<artifactId>jackson-core-asl</artifactId>
+                </exclusion>
+        		<exclusion>
+        			<groupId>org.codehaus.jackson</groupId>
+            		<artifactId>jackson-mapper-asl</artifactId>
+        		</exclusion>
             </exclusions>
         </dependency>
         <!-- BIE Repository -->
@@ -57,7 +65,15 @@
                 <exclusion>
                     <groupId>au.org.ala</groupId>
                     <artifactId>ala-name-matching</artifactId>
-                </exclusion>                
+                </exclusion>
+                <exclusion>
+                	<groupId>org.codehaus.jackson</groupId>
+            		<artifactId>jackson-core-asl</artifactId>
+                </exclusion>
+        		<exclusion>
+        			<groupId>org.codehaus.jackson</groupId>
+            		<artifactId>jackson-mapper-asl</artifactId>
+        		</exclusion>                
             </exclusions>
         </dependency>
         <!-- ALA common UI -->
@@ -76,12 +92,12 @@
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-core-asl</artifactId>
-            <version>1.8.5</version>
+            <version>1.9.2</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-mapper-asl</artifactId>
-            <version>1.8.5</version>
+            <version>1.9.2</version>
         </dependency>
         <!-- LOG4J -->
         <dependency>
@@ -303,7 +319,7 @@
         </repository>
     </repositories>
     <build>
-        <finalName>bie-webapp</finalName>
+        <finalName>bie-service</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
