@@ -413,8 +413,8 @@ public class SpeciesController {
 
     private List<GuidLookupDTO> findGuids(String scientificName) throws Exception {
         String lsid = getLsidByNameAndKingdom(scientificName);
-        List<GuidLookupDTO> guids = new ArrayList<GuidLookupDTO>();
-
+        List<GuidLookupDTO> others = new ArrayList<GuidLookupDTO>();
+        List<GuidLookupDTO> guids = new ArrayList<GuidLookupDTO>(1);
         if(lsid != null && lsid.length() > 0){
             ExtendedTaxonConceptDTO etc = taxonConceptDao.getExtendedTaxonConceptByGuid(lsid, true, true);
             if (etc.getTaxonConcept() != null && etc.getTaxonConcept().getGuid() != null) {
@@ -430,7 +430,7 @@ public class SpeciesController {
                 preferredGuid.setInfoSourceURL(tc.getInfoSourceURL());
                 preferredGuid.setInfoSourceName(tc.getInfoSourceName());
                 preferredGuid.setName(tc.getNameString());
-                guids.add(preferredGuid);
+                //guids.add(preferredGuid);
 
                 //add identifiers
                 for(String identifier: etc.getIdentifiers()){
@@ -442,17 +442,17 @@ public class SpeciesController {
                         g.setInfoSourceId(Integer.toString(apni.getId()));
                         g.setInfoSourceURL(apni.getWebsiteUrl());
                         g.setInfoSourceName(apni.getName());
-                        guids.add(g);
+                        others.add(g);
                     } else if(identifier.contains(":afd.")){
                         g.setInfoSourceId(Integer.toString(afd.getId()));
                         g.setInfoSourceURL(afd.getWebsiteUrl());
                         g.setInfoSourceName(afd.getName());
-                        guids.add(g);
+                        others.add(g);
                     } else if(identifier.contains(":catalogueoflife.")){
                         g.setInfoSourceId(Integer.toString(col.getId()));
                         g.setInfoSourceURL(col.getWebsiteUrl());
                         g.setInfoSourceName(col.getName());
-                        guids.add(g);
+                        others.add(g);
                     }
                 }
                 if(!tc.getGuid().equals(lsid)){
@@ -473,10 +473,17 @@ public class SpeciesController {
                         synonymGuid.setInfoSourceName(matchedConcept.getInfoSourceName());
                         synonymGuid.setName(matchedConcept.getNameString());
                         //include the current list as accepted guids for the name
-                        synonymGuid.setAccepted(guids.toArray(new GuidLookupDTO[]{}));
-                        guids.clear();
+                        synonymGuid.setOtherGuids(others.toArray(new GuidLookupDTO[]{}));
+                        synonymGuid.setAcceptedIdentifier(preferredGuid.getIdentifier());
+                        synonymGuid.setAcceptedName(preferredGuid.getName());
                         guids.add(synonymGuid);
                     }
+                }
+                else{
+                    preferredGuid.setAcceptedIdentifier(preferredGuid.getIdentifier());
+                    preferredGuid.setAcceptedName(preferredGuid.getName());
+                    preferredGuid.setOtherGuids(others.toArray(new GuidLookupDTO[]{}));
+                    guids.add(preferredGuid);
                 }
             }
         }
@@ -905,43 +912,38 @@ public class SpeciesController {
         
     }
 
+    
     private String getLsidByNameAndKingdom(String parameter){
-        String lsid = null;
-        String name = null;
-        String kingdom = null;
-        
-        String[] parts = extractComponents(parameter);
-        name = parts[0];
-        name = name.replaceAll("_", " ");
-        name = name.replaceAll("\\+", " ");
-        kingdom = parts[1];
-        if(kingdom != null){
-            LinnaeanRankClassification cl = new LinnaeanRankClassification(kingdom, null);
-            cl.setScientificName(name);             
-            lsid = taxonConceptDao.findLsidByName(cl.getScientificName(), cl, null);
-        }
-        //check for a scientific name first - this will lookup in the name matching index.  This will produce the correct result in a majority of scientific name cases.
-        if (lsid == null || lsid.length() < 1) {
-            try {
-                NameSearchResult nsr = taxonConceptDao.findCBDataByName(name, null,null);
-                if (nsr != null)
-                  lsid = nsr.getLsid();
-            } catch (Exception e) {
-              // let the other searches do their thing
-            }     
-        }
+      String lsid = null;
+      String name = null;
+      String kingdom = null;
+      
+      String[] parts = extractComponents(parameter);
+      name = parts[0];
+      name = name.replaceAll("_", " ");
+      name = name.replaceAll("\\+", " ");
+      kingdom = parts[1];
+      if(kingdom != null){
+          LinnaeanRankClassification cl = new LinnaeanRankClassification(kingdom, null);
+          cl.setScientificName(name);             
+          lsid = taxonConceptDao.findLsidByName(cl.getScientificName(), cl, null);
+      }
+      //check for a scientific name first - this will lookup in the name matching index.  This will produce the correct result in a majority of scientific name cases.
+      if(lsid == null || lsid.length() < 1){            
+          lsid = taxonConceptDao.findLsidForSearch(name);
+      }
 
-        if(lsid == null || lsid.length() < 1){
-            lsid = taxonConceptDao.findLSIDByCommonName(name);
-        }
+      if(lsid == null || lsid.length() < 1){
+          lsid = taxonConceptDao.findLSIDByCommonName(name);
+      }
 
-        if(lsid == null || lsid.length() < 1){
-            lsid = taxonConceptDao.findLSIDByConcatName(name);
-        }
+      if(lsid == null || lsid.length() < 1){
+          lsid = taxonConceptDao.findLSIDByConcatName(name);
+      }
 
-        
-        return lsid;
-    }
+      
+      return lsid;
+  }
 
     /**
      * FIXME it should be possible to factor this out at some point

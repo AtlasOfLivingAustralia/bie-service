@@ -7,7 +7,9 @@ public class GuidLookupDTO {
     private String infoSourceId;
     private String identifier;
     private String name;
-    private GuidLookupDTO[] accepted;
+    private String acceptedIdentifier;
+    private String acceptedName;
+    private GuidLookupDTO[] otherGuids;
     
 	/**
 	 * @return the infoSourceName
@@ -70,19 +72,40 @@ public class GuidLookupDTO {
 		this.name = name;
 	}
   /**
-   * @return the acceptedLsid
+   * @return the acceptedIdentifier
    */
-  /**
-   * @return the accepted
-   */
-  public GuidLookupDTO[] getAccepted() {
-    return accepted;
+  public String getAcceptedIdentifier() {
+    return acceptedIdentifier;
   }
   /**
-   * @param accepted the accepted to set
+   * @param acceptedGuid the acceptedIdentifier to set
    */
-  public void setAccepted(GuidLookupDTO[] accepted) {
-    this.accepted = accepted;
+  public void setAcceptedIdentifier(String acceptedGuid) {
+    this.acceptedIdentifier = acceptedGuid;
+  }
+  /**
+   * @return the acceptedName
+   */
+  public String getAcceptedName() {
+    return acceptedName;
+  }
+  /**
+   * @param acceptedName the acceptedName to set
+   */
+  public void setAcceptedName(String acceptedName) {
+    this.acceptedName = acceptedName;
+  }
+  /**
+   * @return the otherGuids
+   */
+  public GuidLookupDTO[] getOtherGuids() {
+    return otherGuids;
+  }
+  /**
+   * @param others the others to set
+   */
+  public void setOtherGuids(GuidLookupDTO[] otherGuids) {
+    this.otherGuids = otherGuids;
   }
 
 }

@@ -91,7 +91,7 @@
                         </bean>
                     </property>
                 </bean>
-                <bean class="org.springframework.web.servlet.view.json.MappingJacksonJsonView" />
+                <bean class="org.springframework.web.servlet.view.json.MappingJacksonJsonView" />                    
             </list>
         </property>
         <property name="defaultContentType" ref="htmlMediaType" />
@@ -115,11 +115,26 @@
         <property name="maxUploadSize" value="10000000"/>
     </bean>
     
-     <!-- beans for RestTemplate  -->
-    <bean id="restTemplate" class="org.springframework.web.client.RestTemplate" >
+    <bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter" p:order="0">
         <property name="messageConverters">
             <list>
-                <bean class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter"/>
+                <bean
+                    class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter">
+                    <property name="objectMapper" ref="jacksonObjectMapper" />
+                </bean>
+            </list>
+        </property>
+    </bean>
+    
+   <!-- beans for RestTemplate  -->
+    <bean id="restTemplate" class="org.springframework.web.client.RestTemplate">
+        <property name="messageConverters">
+            <list>
+                <!-- <bean class="org.springframework.http.converter.xml.SourceHttpMessageConverter"/> -->
+                <bean
+                    class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter">
+                    <property name="objectMapper" ref="jacksonObjectMapper" />
+                </bean>
             </list>
         </property>
     </bean>
