@@ -351,8 +351,8 @@ public class SpeciesController {
      * @param scientificName
      * @return view name
      * @throws Exception
-     */ 
-    @RequestMapping(value = {"/ws/guid/{scientificName}","/guid/{scientificName}"}, method = RequestMethod.GET)
+     */
+    @RequestMapping(value = {"/ws/guid/{scientificName:.+}","/guid/{scientificName:.+}"}, method = RequestMethod.GET)
     public @ResponseBody List<GuidLookupDTO> getGuidForName(@PathVariable("scientificName") String scientificName) throws Exception {
         return findGuids(scientificName);
     }
