@@ -370,21 +370,23 @@ public class SpeciesController {
         logTime(start, "Retrieve ETC");
         if(etc != null && etc.getTaxonConcept() != null){
             TaxonConcept tc = etc.getTaxonConcept();
-            SearchResultsDTO<SearchTaxonConceptDTO> taxonHierarchy = searchDao.getClassificationByLeftNS(tc.getLeft(), tc.getRight());
-            logTime(start, "Obtain Classification");
-            List<Map<String,String>> list = new java.util.LinkedList<Map<String,String>>();
-            for(SearchTaxonConceptDTO stc :taxonHierarchy.getResults()){
-                Map<String, String> map = new java.util.LinkedHashMap<String,String>();
-                String name = StringUtils.isEmpty(stc.getNameComplete())? stc.getName() : stc.getNameComplete();
-                map.put("scientificName", name);
-                map.put("guid", stc.getGuid());
-                map.put("rank", stc.getRank());
-                if(stc.getRawRank() != null)
-                    map.put("rawRank",stc.getRawRank());
-                list.add(map);
+            if(tc != null && tc.getLeft() != null && tc.getRight() != null){
+              SearchResultsDTO<SearchTaxonConceptDTO> taxonHierarchy = searchDao.getClassificationByLeftNS(tc.getLeft(), tc.getRight());
+              logTime(start, "Obtain Classification");
+              List<Map<String,String>> list = new java.util.LinkedList<Map<String,String>>();
+              for(SearchTaxonConceptDTO stc :taxonHierarchy.getResults()){
+                  Map<String, String> map = new java.util.LinkedHashMap<String,String>();
+                  String name = StringUtils.isEmpty(stc.getNameComplete())? stc.getName() : stc.getNameComplete();
+                  map.put("scientificName", name);
+                  map.put("guid", stc.getGuid());
+                  map.put("rank", stc.getRank());
+                  if(stc.getRawRank() != null)
+                      map.put("rawRank",stc.getRawRank());
+                  list.add(map);
+              }
+              logTime(start,"Process Classification");
+              return list;
             }
-            logTime(start,"Process Classification");
-            return list;
             //return taxonHierarchy.getResults();
         }
         return Collections.EMPTY_LIST;
