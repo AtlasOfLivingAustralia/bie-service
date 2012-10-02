@@ -113,7 +113,7 @@ public class InfoSourceDTO implements Comparable<InfoSourceDTO> {
     }
 
     public void setInfoSourceURL(String infoSourceURL) {
-        this.infoSourceURL = infoSourceURL.trim();
+        this.infoSourceURL = infoSourceURL != null? infoSourceURL.trim():null;
     }
 
     public Set<String> getSections() {

@@ -49,17 +49,7 @@ import org.ala.dto.SearchDTO;
 import org.ala.dto.SearchResultsDTO;
 import org.ala.dto.SearchTaxonConceptDTO;
 import org.ala.model.AttributableObject;
-import org.ala.model.CommonName;
-import org.ala.model.ConservationStatus;
-import org.ala.model.Document;
-import org.ala.model.ExtantStatus;
-import org.ala.model.Habitat;
-import org.ala.model.Image;
-import org.ala.model.InfoSource;
-import org.ala.model.PestStatus;
-import org.ala.model.Reference;
-import org.ala.model.SimpleProperty;
-import org.ala.model.TaxonConcept;
+import org.ala.model.*;
 import org.ala.repository.Predicates;
 import org.ala.util.ImageUtils;
 import org.ala.util.MimeType;
@@ -1507,6 +1497,11 @@ public class SpeciesController {
         if (etc.getPestStatuses() != null) {
             for (PestStatus ps : etc.getPestStatuses()) {
                 extractInfoSources(ps, infoSourceMap, "Status: " + ps.getStatus(), "Status");
+            }
+        }
+        if(etc.getCategories() != null){
+            for  (Category cat : etc.getCategories())  {
+                extractInfoSources(cat, infoSourceMap, "Category: " + cat.getCategory(), "Category");
             }
         }
         if (etc.getConservationStatuses() != null) {
