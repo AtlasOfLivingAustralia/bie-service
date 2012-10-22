@@ -60,6 +60,15 @@ public class RepoUrlUtils {
 		return searchResults;
 	}
 	
+	public SearchDTO[] fixRepoUrls(SearchDTO[] searchDTOs){
+	  for(SearchDTO dto : searchDTOs){
+      if(dto instanceof SearchTaxonConceptDTO){
+        fixRepoUrls((SearchTaxonConceptDTO) dto);
+      }
+    }  
+	  return searchDTOs;
+	}
+	
 	/**
 	 * Fix the repository URLs
 	 * 

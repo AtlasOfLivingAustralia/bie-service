@@ -566,7 +566,9 @@ public class SpeciesController {
     public SearchDTO[] bulkImageLookupBasedOnGuids(HttpServletRequest request) throws Exception {
         ObjectMapper om = new ObjectMapper();
         String[] guids = om.readValue(request.getInputStream(), (new String[0]).getClass());
-        return searchDao.findByGuids(guids).getResults().toArray(new SearchDTO[]{});
+        SearchDTO[] results= searchDao.findByGuids(guids).getResults().toArray(new SearchDTO[]{});
+        repoUrlUtils.fixRepoUrls(results);
+        return results;
     }
     
     /**
