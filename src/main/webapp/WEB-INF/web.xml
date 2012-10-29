@@ -50,14 +50,6 @@
         <param-value>http://bie.ala.org.au</param-value>
     </context-param>
 
-    <!-- bie admin server url (NOT USED)-->
-    <!-- 
-    <context-param>
-        <param-name>bieAdminServerName</param-name>
-        <param-value>http://diasbtest1.ala.org.au:8080/bie-admin</param-value>
-    </context-param>
-	-->
-	
     <context-param>
         <param-name>casServerName</param-name>
         <param-value>https://auth.ala.org.au</param-value>
@@ -81,12 +73,10 @@
     </context-param>
 
     <!-- CAS filter context path - for local development - there is no context for production deployment -->
-    <!--
     <context-param>
         <param-name>contextPath</param-name>
-        <param-value>/bie-webapp</param-value>
+        <param-value>/bie-service</param-value>
     </context-param>
-    -->
 
     <context-param>
         <param-name>uriFilterPattern</param-name>
