@@ -5,4 +5,6 @@ public interface CollectionDao {
 	public boolean reloadInstitutions()  throws Exception;
 	public boolean reloadDataProviders()  throws Exception;
 	public boolean reloadDataResources()  throws Exception;
+	public boolean reloadLayers()  throws Exception;
+	public boolean reloadRegions()  throws Exception;
 }

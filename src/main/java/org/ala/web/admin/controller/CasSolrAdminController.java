@@ -232,6 +232,89 @@ public class CasSolrAdminController {
 		}		
     }
     
+    @RequestMapping(value = "/admin/reloadLayers", method = RequestMethod.GET)
+    public void reloadLayers(HttpServletRequest request, 
+            HttpServletResponse response) throws Exception{
+    	String remoteuser = request.getRemoteUser();
+    	response.setContentType("application/json");
+		boolean completed = false;
+		PrintWriter writer = null;
+		try{
+			writer = response.getWriter();
+			if (remoteuser != null && request.isUserInRole(ADMIN_ROLE)) {
+				completed = collectionsDao.reloadLayers();
+				response.setStatus(HttpServletResponse.SC_OK);
+				writer.write("{\"task_completed\": " + completed + "}");
+			}
+			else{
+				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+				writer.write("{\"response\": \"You need to have the appropriate role (" + ADMIN_ROLE + ") to access this service. task completed:" + completed + "\"}");
+			}
+		}
+		catch(Exception ex){
+			response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+			writer.write("{error: " + ex.getMessage() + "}");
+			logger.error(ex);
+		}		
+    }    
+    
+    @RequestMapping(value = "/admin/reloadRegions", method = RequestMethod.GET)
+    public void reloadRegions(HttpServletRequest request, 
+            HttpServletResponse response) throws Exception{
+    	String remoteuser = request.getRemoteUser();
+    	response.setContentType("application/json");
+		boolean completed = false;
+		PrintWriter writer = null;
+		try{
+			writer = response.getWriter();
+			if (remoteuser != null && request.isUserInRole(ADMIN_ROLE)) {
+				completed = collectionsDao.reloadLayers();
+				response.setStatus(HttpServletResponse.SC_OK);
+				writer.write("{\"task_completed\": " + completed + "}");
+			}
+			else{
+				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+				writer.write("{\"response\": \"You need to have the appropriate role (" + ADMIN_ROLE + ") to access this service. task completed:" + completed + "\"}");
+			}
+		}
+		catch(Exception ex){
+			response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+			writer.write("{error: " + ex.getMessage() + "}");
+			logger.error(ex);
+		}		
+    }    
+    
+    @RequestMapping(value = "/admin/reloadAll", method = RequestMethod.GET)
+    public void reloadAlls(HttpServletRequest request, 
+            HttpServletResponse response) throws Exception{
+    	String remoteuser = request.getRemoteUser();
+    	response.setContentType("application/json");
+		boolean completed = true;
+		PrintWriter writer = null;
+		try{
+			writer = response.getWriter();
+			if (remoteuser != null && request.isUserInRole(ADMIN_ROLE)) {
+				try { completed = completed && collectionsDao.reloadLayers(); } catch(Exception e) { completed = false; }
+				try { completed = completed && collectionsDao.reloadRegions();  } catch(Exception e) { completed = false; }
+				try { completed = completed && collectionsDao.reloadCollections();  } catch(Exception e) { completed = false; }
+				try { completed = completed && collectionsDao.reloadDataProviders();  } catch(Exception e) { completed = false; }
+				try { completed = completed && collectionsDao.reloadDataResources();  } catch(Exception e) { completed = false; }
+				try { completed = completed && collectionsDao.reloadInstitutions();  } catch(Exception e) { completed = false; }
+				response.setStatus(HttpServletResponse.SC_OK); 
+				writer.write("{\"task_completed\": " + completed + "}");
+			}
+			else {
+				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+				writer.write("{\"response\": \"You need to have the appropriate role (" + ADMIN_ROLE + ") to access this service. task completed:" + completed + "\"}");
+			}
+		}
+		catch(Exception ex){
+			response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+			writer.write("{error: " + ex.getMessage() + "}");
+			logger.error(ex);
+		}		
+    }       
+    
     @RequestMapping(value="/admin/reopenIndex", method =RequestMethod.GET)
     public @ResponseBody String reopenIndex(HttpServletResponse response) throws Exception{
         //reopen the SOLR index to take advantage of terms that have been indexed external to the webapp.

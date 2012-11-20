@@ -1,5 +1,6 @@
 package org.ala.web.admin.dao.Impl;
 
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -8,11 +9,15 @@ import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.ala.dao.IndexedTypes;
 import org.ala.dao.SolrUtils;
 import org.ala.util.ReadOnlyLock;
 import org.ala.web.admin.dao.CollectionDao;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.log4j.Logger;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.common.SolrInputDocument;
@@ -20,9 +25,15 @@ import org.codehaus.jackson.annotate.JsonAnyGetter;
 import org.codehaus.jackson.annotate.JsonAnySetter;
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 @Component("collectionDao")
 public class CollectionDaoImpl implements CollectionDao{
@@ -70,6 +81,108 @@ public class CollectionDaoImpl implements CollectionDao{
     	}
     	return str;    	
     }
+    
+    public boolean reloadLayers() throws Exception {
+
+        SolrServer solrServer = solrUtils.getSolrServer();
+        solrServer.deleteByQuery("idxtype:"+IndexedTypes.LAYERS); // delete layers!
+
+        HttpClient httpClient = new HttpClient();
+        GetMethod gm = new GetMethod("http://spatial.ala.org.au/layers-service/layers.json");
+        logger.debug("Response code for get method: " +httpClient.executeMethod(gm));
+        String layerJson = gm.getResponseBodyAsString();
+        ObjectMapper om = new ObjectMapper();
+        List<Map<String,Object>> layers = om.readValue(layerJson, new TypeReference<List<Map<String,Object>>>() {});
+        for(Map<String,Object> layer: layers){
+            SolrInputDocument doc = new SolrInputDocument();
+            doc.addField("name", layer.get("displayname"));
+            doc.addField("guid", "http://spatial.ala.org.au/layers/more/"+layer.get("name"));
+            doc.addField("description", layer.get("notes"));
+            doc.addField("text", layer.get("source"));
+            doc.addField("text", layer.get("type"));
+            doc.addField("text", layer.get("notes"));
+            doc.addField("text", layer.get("keywords"));
+            if(layer.get("classification1") !=null) doc.addField("text", layer.get("classification1"));
+            if(layer.get("classification2") !=null) doc.addField("text", layer.get("classification2"));
+            doc.addField("content", layer.get("notes"));
+            doc.addField("dataProviderName", layer.get("source"));
+            doc.addField("url", "http://spatial.ala.org.au/layers/more/"+layer.get("name"));
+            doc.addField("id", layer.get("id"));
+            doc.addField("idxtype", IndexedTypes.LAYERS);
+            doc.addField("australian_s", "recorded"); // so they appear in default QF search
+            solrServer.add(doc);
+        }
+        logger.info("Finished syncing layer information with the collectory.");
+        solrServer.commit();
+        logger.info("Finished syncing layers.");
+        return true;
+    }
+    
+	private String getTagValue(String sTag, Element eElement) {
+		NodeList nl = eElement.getElementsByTagName(sTag);
+		if(nl == null || nl.getLength() < 1){
+			return null;
+		}
+		
+		NodeList nlList = nl.item(0).getChildNodes();	 
+	    Node nValue = (Node) nlList.item(0);	 
+	    return nValue.getNodeValue();
+	}    
+    
+	public boolean reloadRegions() throws Exception {
+		int ctr = 0;
+		logger.info("Started syncing regions information....");
+		
+		// init....
+		HttpClient httpClient = new HttpClient();
+		GetMethod gm = new GetMethod("http://regions.ala.org.au/data/sitemap.xml");
+		logger.debug("Response code for get method: " +httpClient.executeMethod(gm));        
+		InputStream responseStream = gm.getResponseBodyAsStream();
+		
+        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+		dbFactory.setNamespaceAware(false);
+
+		DocumentBuilder parser = dbFactory.newDocumentBuilder();
+		Document document = parser.parse(responseStream);
+		NodeList nList = document.getElementsByTagName("url");
+		
+		// start process....
+		if(nList.getLength() > 0){
+			SolrServer solrServer = solrUtils.getSolrServer();
+			solrServer.deleteByQuery("idxtype:"+IndexedTypes.REGION);
+			for (int temp = 0; temp < nList.getLength(); temp++) {	 
+				Node nNode = nList.item(temp);
+				if (nNode.getNodeType() == Node.ELEMENT_NODE) {	 
+					Element eElement = (Element) nNode;
+					String loc = getTagValue("loc", eElement);
+					if(loc != null){
+						String url = java.net.URLDecoder.decode(loc, "UTF-8");
+						String[] terms = url.split("/");
+						if(terms.length > 1){
+							String name = terms[terms.length -1];
+							String region = terms[terms.length - 2];
+							if(name != null && region != null){
+								SolrInputDocument doc = new SolrInputDocument();
+								doc.addField("idxtype", IndexedTypes.REGION);
+								doc.addField("guid", url);
+								doc.addField("id", url);
+								doc.addField("url", url);
+								doc.addField("regionType", region);
+								doc.addField("name", name);
+                                doc.addField("text", name);
+                                doc.addField("australian_s", "recorded"); // so they appear in default QF search
+								solrServer.add(doc);
+								ctr++;
+							}						
+						}
+					}			      
+				}
+			}
+			solrServer.commit();
+		}
+		logger.info("Finished syncing regions information. Total count: " + ctr);
+		return true;
+	}
     
     public boolean reloadCollections() throws Exception{
     	Calendar ticket = null;
@@ -347,7 +460,7 @@ public class CollectionDaoImpl implements CollectionDao{
 			}
 			logger.info("reloadDataResources in (sec): "+((Calendar.getInstance().getTimeInMillis() - ticket.getTimeInMillis())/1000) + " , ctr = " + ctr);			
 		}
-		finally{
+		finally {
 			if(ReadOnlyLock.getInstance().isReadOnly()){
 				ReadOnlyLock.getInstance().setUnlock(ticket);
 				logger.info("**** setUnlock-isReadOnly: " + ReadOnlyLock.getInstance().isReadOnly());
