@@ -88,19 +88,17 @@ public class SearchController {
     
     public SearchController(){
     	mapper.getDeserializationConfig().set(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    	//get the i18n map to use for downalod fields
+    	//get the i18n map to use for download fields
 //    	String path = "localization/stat_codes.properties";    	
     	properties = new Properties();
-    	try{
+    	try {
     	    properties.load(getClass().getResourceAsStream("/messages.properties"));
     	}
     	catch(Exception e){
-    	    e.printStackTrace();
+    	    logger.error(e.getMessage(),e);
     	}
-//    	InputStream foo = loader.getResourceAsStream(path);
-    	
-
     }
+
     /**
      * Downloads the supplied fields to the SOLR query. NB this adds an extra fq for idxtype:TAXON
      * @param query
@@ -154,7 +152,13 @@ public class SearchController {
 	
 	/**
 	 * Performs a search across all objects, and selects to show the view for the closest match.
-	 * 
+     *
+     * Workflow should be:
+     *
+     * 1) Find exact match in Australia
+     * 2) If 1) fails, Find exact match
+     * 3) If 2) fails, Full search over everything
+	 *
 	 * @param query
 	 * @param filterQuery
 	 * @param startIndex
@@ -175,30 +179,17 @@ public class SearchController {
 			@RequestParam(value="sort", required=false, defaultValue="score") String sortField,
 			@RequestParam(value="dir", required=false, defaultValue ="asc") String sortDirection,
 			@RequestParam(value="title", required=false, defaultValue ="Search Results") String title,
-		    Model model,
-            HttpServletRequest request) throws Exception {
+		    Model model) throws Exception {
 		
-		if (StringUtils.isEmpty(query) && (filterQuery==null || filterQuery.length==0)) {
-			return SEARCH;
-		}
+//		if (StringUtils.isEmpty(query) && (filterQuery == null || filterQuery.length == 0)) {
+//			return SEARCH;
+//		}
 		
 		//search across the board, select tab with highest score - with a facet on other types
 		//if no results for species - pick another tab
 		//initial across the board search
 		//with facets on TAXON, REGION, DATASET, DATAPROVIDER, COLLECTION, INSTITUTION
-        logger.debug("getServletPath = " + request.getServletPath());
-        String requestURL = request.getServletPath();
-/*        
-        // if params are set but empty (e.g. foo=&bar=) then provide sensible defaults
-        if (filterQuery != null && filterQuery.length == 0) {
-            filterQuery = null;
-        //} else if (filterQuery == null) {
-        } else if (filterQuery == null && !StringUtils.endsWithIgnoreCase(requestURL, "json")) {
-            // catch search with no fq param and default to "Recorded in Australia"
-            return "redirect:/search?q=" + query + "&fq=australian_s:recorded";
-        }
-*/
-        
+
         if (startIndex == null) {
             startIndex = 0;
         }
@@ -242,49 +233,47 @@ public class SearchController {
             model.addAttribute("searchResults", searchResults);
             model.addAttribute("totalRecords", searchResults.getTotalRecords());
             model.addAttribute("lastPage", calculateLastPage(searchResults.getTotalRecords(), pageSize));
-            logger.debug("Selected view: "+SEARCH_LIST);
+            logger.debug("Selected view: " + SEARCH_LIST);
             return SEARCH_LIST;
         }
 
-        // if filterQuery is null only (empty is consequence search)
+        // if filter query is null only (empty is consequence search)
         // then it is init search, do extra process as below...        
         if (filterQuery == null) {
         	List<SearchDTO> result = null;
         	boolean foundExact = false;
 
-        	// exact search for all records
-        	filterQuery = new String[]{"australian_s:recorded"};
+        	// exact search australian only
+        	//filterQuery = new String[]{"australian_s:recorded"};
+            filterQuery = new String[]{};
         	searchResults = searchDao.doExactTextSearch(query, filterQuery, startIndex, pageSize, sortField, sortDirection);
-        	result = searchResults.getResults();
-        	if(result != null && result.size() > 0){
+
+        	if(searchResults.getResults() != null && !searchResults.getResults().isEmpty()){
         		foundExact = true;
-        		model.addAttribute("isAustralian", true);
-        	}
-    		else{
-    			filterQuery = new String[]{""};
-            	searchResults = searchDao.doExactTextSearch(query, filterQuery, startIndex, pageSize, sortField, sortDirection);
-            	result = searchResults.getResults();
-            	if(result != null && result.size() > 0){
-            		foundExact = true;
-            		model.addAttribute("isAustralian", false);
-            	}
+//        		model.addAttribute("isAustralian", true);
+//        	} else {
+//    			filterQuery = new String[]{};
+//            	searchResults = searchDao.doExactTextSearch(query, filterQuery, startIndex, pageSize, sortField, sortDirection);
+//            	if(searchResults.getResults() != null && !searchResults.getResults().isEmpty()){
+//            		foundExact = true;
+//            		model.addAttribute("isAustralian", false);
+//            	}
     		}
 
         	if(foundExact){
         		searchResults = searchDao.doFullTextSearch(query, filterQuery, startIndex, pageSize, sortField, sortDirection);
-        	}
-        	else{
-	        	filterQuery = new String[]{"australian_s:recorded"};
+        	} else {
+	        	//filterQuery = new String[]{"australian_s:recorded"};
 	        	searchResults = searchDao.doFullTextSearch(query, filterQuery, startIndex, pageSize, sortField, sortDirection);
 	        	result = searchResults.getResults();
-	        	if(result == null || result.size() < 1){        		
-	        		filterQuery = new String[]{""};
-	        		searchResults = searchDao.doFullTextSearch(query, filterQuery, startIndex, pageSize, sortField, sortDirection);
-	        		model.addAttribute("isAustralian", false);
-	        	}
-	        	else{
-	        		model.addAttribute("isAustralian", true);
-	        	}
+//	        	if(result == null || result.size() < 1){
+//	        		filterQuery = new String[]{""};
+//	        		searchResults = searchDao.doFullTextSearch(query, filterQuery, startIndex, pageSize, sortField, sortDirection);
+//	        		model.addAttribute("isAustralian", false);
+//	        	}
+//	        	else{
+//	        		model.addAttribute("isAustralian", true);
+//	        	}
         	}
         }
 		
@@ -394,22 +383,19 @@ public class SearchController {
 	}
 	
 	private List<SearchDTO> removedDuplicateCommonName(List<SearchDTO> results){
-		Hashtable<String, String> hlnames =null;
-    	List<String> lnames =null;
-    	
 		for(SearchDTO result : results){
 			if(result instanceof SearchTaxonConceptDTO){
 				String names = ((SearchTaxonConceptDTO)result).getCommonName();			
 				if(names != null){
 					List<String> commonNames = org.springframework.util.CollectionUtils.arrayToList(names.split(","));
-		            hlnames = new Hashtable<String, String>();
+		            Hashtable<String, String> hlnames = new Hashtable<String, String>();
 		            for(String name : commonNames){
 		            	if(!hlnames.containsKey(name.trim().toLowerCase())){
 		            		hlnames.put(name.trim().toLowerCase(), name);
 		            	}
 		            }
 		            if(!hlnames.isEmpty()){
-		            	lnames = new ArrayList<String>(hlnames.values());
+		            	List<String> lnames = new ArrayList<String>(hlnames.values());
 		            	Collections.sort(lnames);
 		            	names = lnames.toString();
 		            	if(names != null && names.length() > 1){
@@ -506,11 +492,11 @@ public class SearchController {
     private String getSortDirection(String sortField, String sortDirection){
         String direction = sortDirection;
         if(sortField.equals("score")){
-                if(sortDirection.equals("asc"))
-                    direction = "desc";
-                else
-                    direction = "asc";
-            }
+            if(sortDirection.equals("asc"))
+                direction = "desc";
+            else
+                direction = "asc";
+        }
         return direction;
     }
 	
@@ -612,5 +598,4 @@ public class SearchController {
     public void setDefaultDownloadFields(String defaultDownloadFields) {
         this.defaultDownloadFields = defaultDownloadFields;
     }
-	
 }
