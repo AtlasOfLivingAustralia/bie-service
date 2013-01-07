@@ -55,14 +55,11 @@ public class CollectionDaoImpl implements CollectionDao{
     	this.restTemplate = restTemplate;
     }
     
-    public CollectionDaoImpl(){
-    }    
+    public CollectionDaoImpl(){}
     
     private Object callCollectionsWs(String jsonUri, Class clazz){
-		Object object = restTemplate.getForObject(jsonUri, clazz);
-		
-		return object;
-	}    
+		return restTemplate.getForObject(jsonUri, clazz);
+	}
     
     private String listToString(Object list){
     	String str = "";
@@ -471,8 +468,7 @@ public class CollectionDaoImpl implements CollectionDao{
     
 }
 
-class DynaBean
-{
+class DynaBean {
     // Two mandatory properties
     protected final String uid;
     protected final String name;

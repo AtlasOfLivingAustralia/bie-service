@@ -107,7 +107,7 @@ public class SpeciesController {
     /** Name of view for site home page */
     private String HOME_PAGE = "wsPage";
     /** Name of view for a single taxon */
-    private final String SPECIES_SHOW = "species/show";
+//    private final String SPECIES_SHOW = "species/show";
     /** Name of view for a single taxon */
     private final String SPECIES_SHOW_BRIEF = "species/showBrief";	
     /** Name of view for a taxon error page */
@@ -489,7 +489,7 @@ public class SpeciesController {
      * @return view name
      * @throws Exception
      */ 
-    @RequestMapping(value = "/species/image/{imageType}/{guid:.+}", method = RequestMethod.GET)
+    @RequestMapping(value = {"/species/image/{imageType}/{guid:.+}", "/ws/species/image/{imageType}/{guid:.+}"}, method = RequestMethod.GET)
     public String showImages(
             @PathVariable("guid") String guidParam,
             @PathVariable("imageType") String imageType,
@@ -571,192 +571,192 @@ public class SpeciesController {
         return results;
     }
     
-    /**
-     * Map to a /{guid} URI.
-     * E.g. /species/urn:lsid:biodiversity.org.au:afd.taxon:a402d4c8-db51-4ad9-a72a-0e912ae7bc9a
-     * 
-     * @param model
-     * @return view name
-     * @throws Exception
-     */ 
-    @RequestMapping(value = "/species/{guid:.+}", method = RequestMethod.GET)
-    public String showSpecies(
-            @PathVariable("guid") String guidParam,
-            @RequestParam(value="conceptName", defaultValue ="", required=false) String conceptName,
-            HttpServletRequest request,
-            Model model) throws Exception {
-        String guid = guidParam;
-        long startTime = System.currentTimeMillis();
-        long sTime = System.currentTimeMillis();
-        
-        logger.debug("Displaying page for: " + guid +" .....");
-        ExtendedTaxonConceptDTO etc = null;
-        StringBuffer sb = new StringBuffer();
-       
-        if(guid == null || guid.length() < 1){
-        	//no match for the parameter, redirect to search page.
-            return "redirect:/search?q=" + extractScientificName(guid);
-        }
-        
-        if (guid.matches("(urn\\:lsid[a-zA-Z\\-0-9\\:\\.]*)") || guid.matches("([0-9]*)") || guid.startsWith("ALA_")) {   
-//        	if(guid.matches("([0-9]*)") && guid.length() < 8){
-//        		//no match for the parameter, redirect to search page.
-//                return "redirect:/search?q=" + extractScientificName(guid);
+//    /**
+//     * Map to a /{guid} URI.
+//     * E.g. /species/urn:lsid:biodiversity.org.au:afd.taxon:a402d4c8-db51-4ad9-a72a-0e912ae7bc9a
+//     *
+//     * @param model
+//     * @return view name
+//     * @throws Exception
+//     */
+//    @RequestMapping(value = "/species/{guid:.+}", method = RequestMethod.GET)
+//    public String showSpecies(
+//            @PathVariable("guid") String guidParam,
+//            @RequestParam(value="conceptName", defaultValue ="", required=false) String conceptName,
+//            HttpServletRequest request,
+//            Model model) throws Exception {
+//        String guid = guidParam;
+//        long startTime = System.currentTimeMillis();
+//        long sTime = System.currentTimeMillis();
+//
+//        logger.debug("Displaying page for: " + guid +" .....");
+//        ExtendedTaxonConceptDTO etc = null;
+//        StringBuffer sb = new StringBuffer();
+//
+//        if(guid == null || guid.length() < 1){
+//        	//no match for the parameter, redirect to search page.
+//            return "redirect:/search?q=" + extractScientificName(guid);
+//        }
+//
+//        if (guid.matches("(urn\\:lsid[a-zA-Z\\-0-9\\:\\.]*)") || guid.matches("([0-9]*)") || guid.startsWith("ALA_")) {
+////        	if(guid.matches("([0-9]*)") && guid.length() < 8){
+////        		//no match for the parameter, redirect to search page.
+////                return "redirect:/search?q=" + extractScientificName(guid);
+////        	}
+//        	etc = taxonConceptDao.getExtendedTaxonConceptByGuid(guid);
+//        }
+//        else{
+//        	// guid == sciName and kingkom?
+//        	String lsid = getLsidByNameAndKingdom(guid);
+//        	if(lsid != null && lsid.length() > 0){
+//                etc = taxonConceptDao.getExtendedTaxonConceptByGuid(lsid);
+//                if (etc.getTaxonConcept() != null && etc.getTaxonConcept().getGuid() != null) {
+//                    guid = lsid;
+//                }
 //        	}
-        	etc = taxonConceptDao.getExtendedTaxonConceptByGuid(guid);
-        }
-        else{
-        	// guid == sciName and kingkom?
-        	String lsid = getLsidByNameAndKingdom(guid);
-        	if(lsid != null && lsid.length() > 0){
-                etc = taxonConceptDao.getExtendedTaxonConceptByGuid(lsid);
-                if (etc.getTaxonConcept() != null && etc.getTaxonConcept().getGuid() != null) {
-                    guid = lsid;
-                }
-        	}   
-                
-                
-        	//if etc is empty then guid == sciName and kingkom?
-//	        if(etc == null || etc.getTaxonConcept() == null || etc.getTaxonConcept().getGuid() == null){
-//	            String lsid = getLsidByNameAndKingdom(guid);
-//	            if(lsid != null && lsid.length() > 0){
-//	                etc = taxonConceptDao.getExtendedTaxonConceptByGuid(lsid);
-//	                if (etc.getTaxonConcept() != null && etc.getTaxonConcept().getGuid() != null) {
-//	                    guid = lsid;
-//	                }
-//	            }
-//	            else{
-//	                //no match for the parameter, redirect to search page.
-//	                return "redirect:/search?q=" + extractScientificName(guid);
-//	            }
+//
+//
+//        	//if etc is empty then guid == sciName and kingkom?
+////	        if(etc == null || etc.getTaxonConcept() == null || etc.getTaxonConcept().getGuid() == null){
+////	            String lsid = getLsidByNameAndKingdom(guid);
+////	            if(lsid != null && lsid.length() > 0){
+////	                etc = taxonConceptDao.getExtendedTaxonConceptByGuid(lsid);
+////	                if (etc.getTaxonConcept() != null && etc.getTaxonConcept().getGuid() != null) {
+////	                    guid = lsid;
+////	                }
+////	            }
+////	            else{
+////	                //no match for the parameter, redirect to search page.
+////	                return "redirect:/search?q=" + extractScientificName(guid);
+////	            }
+////	        }
+//        }
+//
+//        if(etc == null || etc.getTaxonConcept() == null || etc.getTaxonConcept().getGuid() == null){
+//        	//no match for the parameter, redirect to search page.
+//            return "redirect:/search?q=" + extractScientificName(guid);
+//        }
+//        sb.append("get ETC:" + (System.currentTimeMillis() - startTime));
+//        startTime = System.currentTimeMillis();
+//
+//        model.addAttribute("isReadOnly", ReadOnlyLock.getInstance().isReadOnly());
+//
+//        //remove blackListed image...
+//        etc.setImages(removeBlackListedImageItem(etc.getImages()));
+//        if (request.getRemoteUser() != null && request.isUserInRole("ROLE_ADMIN")) {
+//            model.addAttribute("isRoleAdmin", true);
+//        }
+//        else{
+//            model.addAttribute("isRoleAdmin", false);
+//        }
+//
+//        if (etc.getTaxonConcept() == null || etc.getTaxonConcept().getGuid() == null) {
+//            model.addAttribute("errorMessage", "The requested taxon was not found: "+conceptName+" ("+ guid+")");
+//            return SPECIES_ERROR;
+//        }
+//
+//        //construct the scientific name and authorship
+//        String[] sciAndAuthor = getScientificNameAndAuthorship(etc);
+//        model.addAttribute("scientificName", sciAndAuthor[0]);
+//        model.addAttribute("authorship", sciAndAuthor[1]);
+//
+//        //common name with many infosources
+//        List<CommonName> names = PageUtils.fixCommonNames(etc.getCommonNames()); // remove duplicate names
+//        Map<String, List<CommonName>> namesMap = PageUtils.sortCommonNameSources(names);
+//        String[] keyArray = PageUtils.commonNameRankingOrderKey(namesMap.keySet(), names);
+//        //        String[] keyArray = namesMap.keySet().toArray(new String[0]);
+//        //        Arrays.sort(keyArray, String.CASE_INSENSITIVE_ORDER);
+//        model.addAttribute("sortCommonNameSources", namesMap);
+//        model.addAttribute("sortCommonNameKeys", keyArray);
+//
+//        etc.setCommonNames(names);
+//        etc.setImages(addImageDocIds(etc.getImages()));
+//        sb.append(", get Common Name:" + (System.currentTimeMillis() - startTime));
+//        startTime = System.currentTimeMillis();
+//
+//        //        etc.setScreenshotImages(addImageDocIds(etc.getScreenshotImages()));
+//        model.addAttribute("extendedTaxonConcept", repoUrlUtils.fixRepoUrls(etc));
+//        model.addAttribute("commonNames", getCommonNamesString(etc));
+//        model.addAttribute("textProperties", filterSimpleProperties(etc));
+//        model.addAttribute("infoSources", getInfoSource(etc));
+//
+//        //retrieve cookies indicating user has ranked
+//        //List<StoredRanking> srs = RankingCookieUtils.getRankedImageUris(request.getCookies(), guid);
+//        List<StoredRanking> srs = null;
+//        try{
+//	        List<Cookie> cookieList = (List<Cookie>)request.getSession(true).getAttribute(RankingCookieUtils.RANKING_SESSION_COOKIES);
+//	        if(cookieList == null){
+//	        	cookieList = new ArrayList<Cookie>();
+//	        	request.getSession(true).setAttribute(RankingCookieUtils.RANKING_SESSION_COOKIES, cookieList);
 //	        }
-        }
-
-        if(etc == null || etc.getTaxonConcept() == null || etc.getTaxonConcept().getGuid() == null){
-        	//no match for the parameter, redirect to search page.
-            return "redirect:/search?q=" + extractScientificName(guid);
-        }        
-        sb.append("get ETC:" + (System.currentTimeMillis() - startTime));
-        startTime = System.currentTimeMillis();
-        
-        model.addAttribute("isReadOnly", ReadOnlyLock.getInstance().isReadOnly());
-        
-        //remove blackListed image...
-        etc.setImages(removeBlackListedImageItem(etc.getImages()));        
-        if (request.getRemoteUser() != null && request.isUserInRole("ROLE_ADMIN")) {
-            model.addAttribute("isRoleAdmin", true);
-        }
-        else{
-            model.addAttribute("isRoleAdmin", false);
-        }
-
-        if (etc.getTaxonConcept() == null || etc.getTaxonConcept().getGuid() == null) {
-            model.addAttribute("errorMessage", "The requested taxon was not found: "+conceptName+" ("+ guid+")");
-            return SPECIES_ERROR;
-        }
-
-        //construct the scientific name and authorship
-        String[] sciAndAuthor = getScientificNameAndAuthorship(etc);
-        model.addAttribute("scientificName", sciAndAuthor[0]);
-        model.addAttribute("authorship", sciAndAuthor[1]);
-
-        //common name with many infosources
-        List<CommonName> names = PageUtils.fixCommonNames(etc.getCommonNames()); // remove duplicate names
-        Map<String, List<CommonName>> namesMap = PageUtils.sortCommonNameSources(names);
-        String[] keyArray = PageUtils.commonNameRankingOrderKey(namesMap.keySet(), names);
-        //        String[] keyArray = namesMap.keySet().toArray(new String[0]);
-        //        Arrays.sort(keyArray, String.CASE_INSENSITIVE_ORDER);
-        model.addAttribute("sortCommonNameSources", namesMap);
-        model.addAttribute("sortCommonNameKeys", keyArray);
-
-        etc.setCommonNames(names); 
-        etc.setImages(addImageDocIds(etc.getImages()));
-        sb.append(", get Common Name:" + (System.currentTimeMillis() - startTime));
-        startTime = System.currentTimeMillis();
-        
-        //        etc.setScreenshotImages(addImageDocIds(etc.getScreenshotImages()));
-        model.addAttribute("extendedTaxonConcept", repoUrlUtils.fixRepoUrls(etc));
-        model.addAttribute("commonNames", getCommonNamesString(etc));
-        model.addAttribute("textProperties", filterSimpleProperties(etc));
-        model.addAttribute("infoSources", getInfoSource(etc));
-
-        //retrieve cookies indicating user has ranked
-        //List<StoredRanking> srs = RankingCookieUtils.getRankedImageUris(request.getCookies(), guid);
-        List<StoredRanking> srs = null;
-        try{
-	        List<Cookie> cookieList = (List<Cookie>)request.getSession(true).getAttribute(RankingCookieUtils.RANKING_SESSION_COOKIES);
-	        if(cookieList == null){
-	        	cookieList = new ArrayList<Cookie>();
-	        	request.getSession(true).setAttribute(RankingCookieUtils.RANKING_SESSION_COOKIES, cookieList);
-	        }
-	        Cookie[] cookies = new Cookie[cookieList.size()];        
-	        srs = RankingCookieUtils.getRankedImageUris(cookieList.toArray(cookies), guid);
-        }
-        catch(Exception ee){
-        	logger.error(ee);
-        }
-        //create a list of URLs
-        List<String> rankedUris = new ArrayList<String>();
-        Map<String, Boolean> rankingMap = new HashMap<String, Boolean>();
-        for(StoredRanking sr : srs){
-            rankedUris.add(sr.getUri());
-            rankingMap.put(sr.getUri(), sr.isPositive());
-        }
-        sb.append(", get ranking:" + (System.currentTimeMillis() - startTime));
-        startTime = System.currentTimeMillis();
-        
-        TaxonConcept tc = etc.getTaxonConcept();
-
-        //load the hierarchy
-        if(tc.getLeft()!=null){
-            SearchResultsDTO<SearchTaxonConceptDTO> taxonHierarchy = searchDao.getClassificationByLeftNS(tc.getLeft(), tc.getRight());
-        	//SearchResultsDTO<SearchTaxonConceptDTO> taxonHierarchy = searchDao.getClassificationByLeftNS(tc.getLeft());
-            model.addAttribute("taxonHierarchy", taxonHierarchy.getResults());
-        }
-        sb.append(", get hierarchy:" + (System.currentTimeMillis() - startTime));
-        startTime = System.currentTimeMillis();
-        
-        //load child concept using search indexes
-        List<SearchTaxonConceptDTO> childConcepts = searchDao.getChildConceptsParentId(Integer.toString(tc.getId()));
-        //Reorder the children concepts so that ordering is based on rank followed by name
-        //TODO: Currently this is being performed here instead of in the DAO incase somewhere relies on the default order.  We may need to move this
-        Collections.sort(childConcepts, new TaxonRankNameComparator());
-        
-        model.addAttribute("childConcepts", childConcepts);
-        sb.append(", get child concept:" + (System.currentTimeMillis() - startTime));
-        startTime = System.currentTimeMillis();
-        
-        //create a map
-        model.addAttribute("rankedImageUris", rankedUris);
-        model.addAttribute("rankedImageUriMap", rankingMap);
-        // add map for conservation status regions to sections in the WP page describing them (http://test.ala.org.au/threatened-species-codes/#International)
-        model.addAttribute("statusRegionMap", statusRegionMap());
-        // get static occurrence map from spatial portal via JSON lookup
-//        model.addAttribute("spatialPortalMap", PageUtils.getSpatialPortalMap(etc.getTaxonConcept().getGuid()));
-        sb.append(", get map:" + (System.currentTimeMillis() - startTime));
-        model.addAttribute("executeTime", sb.toString() + ", total: " + (System.currentTimeMillis() - sTime));
-        
-        //send message to logger service
-        String userAgent = request.getHeader("User-Agent");
-        if(userAgent == null || !userAgent.toLowerCase().contains("googlebot")){
-	        Map<String, Integer> imap = createImageSourceMap(etc);
-	        if(imap.size() > 0){
-		        LogEventVO vo = new LogEventVO(LogEventType.IMAGE_VIEWED, "", "species image view", request.getLocalAddr(), imap);
-		        logger.log(RestLevel.REMOTE, vo);
-	        }
-        }
-        
-        // if highTaxa then get more image from image-search
-        //Temporarily restrict to major ranks
-        //TODO fix to use left right values...
-        //RANK IDs will be NULL in ALA added scientific names...
-        if(etc.getTaxonConcept().getRankID() != null &&etc.getTaxonConcept().getRankID() < 7000  && etc.getTaxonConcept().getRankID()%1000 ==0){
-        	List<SearchDTO> extraImages = imageSearch(etc.getTaxonConcept().getRankString(), etc.getTaxonConcept().getNameString());
-        	model.addAttribute("extraImages", extraImages);
-        }
-        logger.debug("Returning page view for: " + guid +" .....");
-        return SPECIES_SHOW;
-    }
+//	        Cookie[] cookies = new Cookie[cookieList.size()];
+//	        srs = RankingCookieUtils.getRankedImageUris(cookieList.toArray(cookies), guid);
+//        }
+//        catch(Exception ee){
+//        	logger.error(ee);
+//        }
+//        //create a list of URLs
+//        List<String> rankedUris = new ArrayList<String>();
+//        Map<String, Boolean> rankingMap = new HashMap<String, Boolean>();
+//        for(StoredRanking sr : srs){
+//            rankedUris.add(sr.getUri());
+//            rankingMap.put(sr.getUri(), sr.isPositive());
+//        }
+//        sb.append(", get ranking:" + (System.currentTimeMillis() - startTime));
+//        startTime = System.currentTimeMillis();
+//
+//        TaxonConcept tc = etc.getTaxonConcept();
+//
+//        //load the hierarchy
+//        if(tc.getLeft()!=null){
+//            SearchResultsDTO<SearchTaxonConceptDTO> taxonHierarchy = searchDao.getClassificationByLeftNS(tc.getLeft(), tc.getRight());
+//        	//SearchResultsDTO<SearchTaxonConceptDTO> taxonHierarchy = searchDao.getClassificationByLeftNS(tc.getLeft());
+//            model.addAttribute("taxonHierarchy", taxonHierarchy.getResults());
+//        }
+//        sb.append(", get hierarchy:" + (System.currentTimeMillis() - startTime));
+//        startTime = System.currentTimeMillis();
+//
+//        //load child concept using search indexes
+//        List<SearchTaxonConceptDTO> childConcepts = searchDao.getChildConceptsParentId(Integer.toString(tc.getId()));
+//        //Reorder the children concepts so that ordering is based on rank followed by name
+//        //TODO: Currently this is being performed here instead of in the DAO incase somewhere relies on the default order.  We may need to move this
+//        Collections.sort(childConcepts, new TaxonRankNameComparator());
+//
+//        model.addAttribute("childConcepts", childConcepts);
+//        sb.append(", get child concept:" + (System.currentTimeMillis() - startTime));
+//        startTime = System.currentTimeMillis();
+//
+//        //create a map
+//        model.addAttribute("rankedImageUris", rankedUris);
+//        model.addAttribute("rankedImageUriMap", rankingMap);
+//        // add map for conservation status regions to sections in the WP page describing them (http://test.ala.org.au/threatened-species-codes/#International)
+//        model.addAttribute("statusRegionMap", statusRegionMap());
+//        // get static occurrence map from spatial portal via JSON lookup
+////        model.addAttribute("spatialPortalMap", PageUtils.getSpatialPortalMap(etc.getTaxonConcept().getGuid()));
+//        sb.append(", get map:" + (System.currentTimeMillis() - startTime));
+//        model.addAttribute("executeTime", sb.toString() + ", total: " + (System.currentTimeMillis() - sTime));
+//
+//        //send message to logger service
+//        String userAgent = request.getHeader("User-Agent");
+//        if(userAgent == null || !userAgent.toLowerCase().contains("googlebot")){
+//	        Map<String, Integer> imap = createImageSourceMap(etc);
+//	        if(imap.size() > 0){
+//		        LogEventVO vo = new LogEventVO(LogEventType.IMAGE_VIEWED, "", "species image view", request.getLocalAddr(), imap);
+//		        logger.log(RestLevel.REMOTE, vo);
+//	        }
+//        }
+//
+//        // if highTaxa then get more image from image-search
+//        //Temporarily restrict to major ranks
+//        //TODO fix to use left right values...
+//        //RANK IDs will be NULL in ALA added scientific names...
+//        if(etc.getTaxonConcept().getRankID() != null &&etc.getTaxonConcept().getRankID() < 7000  && etc.getTaxonConcept().getRankID()%1000 ==0){
+//        	List<SearchDTO> extraImages = imageSearch(etc.getTaxonConcept().getRankString(), etc.getTaxonConcept().getNameString());
+//        	model.addAttribute("extraImages", extraImages);
+//        }
+//        logger.debug("Returning page view for: " + guid +" .....");
+//        return SPECIES_SHOW;
+//    }
 
     /**
      * WS - return JSON list of images for a given higher taxa name string and rank
@@ -1011,7 +1011,7 @@ public class SpeciesController {
      * @return
      * @throws Exception
      */
-    @RequestMapping(value = {"/ws/species/{guid}.json","/species/{guid}.json","/species/{guid}.jsonp"}, method = RequestMethod.GET)
+    @RequestMapping(value = {"/species/{guid:.+}","/ws/species/{guid:.+}", "/ws/species/{guid}.json","/species/{guid}.json","/species/{guid}.jsonp"}, method = RequestMethod.GET)
     public @ResponseBody ExtendedTaxonConceptDTO showSpeciesJson(@PathVariable("guid") String guid) throws Exception {
         logger.info("Retrieving concept JSON with guid: "+guid);
         return findConceptByNameOrGuid(guid);

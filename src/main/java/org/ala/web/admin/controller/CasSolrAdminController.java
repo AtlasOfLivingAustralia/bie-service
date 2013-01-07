@@ -12,6 +12,7 @@ import org.ala.dao.SolrUtils;
 import org.ala.dao.SolrUtils.IndexFieldDTO;
 import org.ala.harvester.BiocacheHarvester;
 import org.ala.hbase.RepoDataLoader;
+import org.ala.lucene.CreateWordPressIndex;
 import org.ala.report.GoogleSitemapGenerator;
 import org.ala.util.ReadOnlyLock;
 import org.ala.util.XmlReportUtil;
@@ -43,7 +44,10 @@ public class CasSolrAdminController {
 	protected XmlReportUtil xmlReportUtil;
 	
 	@Inject
-	protected BiocacheHarvester biocacheHarvester; 
+	protected BiocacheHarvester biocacheHarvester;
+
+	@Inject
+	protected CreateWordPressIndex createWordPressIndex;
 	
 	@Inject
 	protected RepoDataLoader repoDataLoader; 
@@ -99,19 +103,19 @@ public class CasSolrAdminController {
 		Runnable r = new Runnable(){
 			@Override
 			public void run() {
-				try {
-					logger.info("Starting Biocache harvest.");
-					//BiocacheHarvester bh = new BiocacheHarvester();
-					biocacheHarvester.main(new String[]{"-lastWeek"});
-					logger.info("Starting Biocache loading.");
-					//RepoDataLoader rl = new RepoDataLoader();
-					repoDataLoader.main(new String[]{"-reindex", "-biocache"});
-					logger.info("Biocache synchronise complete.");
-			        solrUtils.reopenSolr();
-			        logger.info("Biocache synchronise complete - index reopened...");
-				} catch(Exception e){
-					logger.error(e.getMessage(), e);
-				}
+            try {
+                logger.info("Starting Biocache harvest.");
+                //BiocacheHarvester bh = new BiocacheHarvester();
+                biocacheHarvester.main(new String[]{"-lastWeek"});
+                logger.info("Starting Biocache loading.");
+                //RepoDataLoader rl = new RepoDataLoader();
+                repoDataLoader.main(new String[]{"-reindex", "-biocache"});
+                logger.info("Biocache synchronise complete.");
+                solrUtils.reopenSolr();
+                logger.info("Biocache synchronise complete - index reopened...");
+            } catch(Exception e){
+                logger.error(e.getMessage(), e);
+            }
 			}
 		};
 		Thread t = new Thread(r);
@@ -300,7 +304,8 @@ public class CasSolrAdminController {
 				try { completed = completed && collectionsDao.reloadDataProviders();  } catch(Exception e) { completed = false; }
 				try { completed = completed && collectionsDao.reloadDataResources();  } catch(Exception e) { completed = false; }
 				try { completed = completed && collectionsDao.reloadInstitutions();  } catch(Exception e) { completed = false; }
-				response.setStatus(HttpServletResponse.SC_OK); 
+                try { completed = completed && createWordPressIndex.loadWordpress()>0;  } catch(Exception e) { completed = false; }
+				response.setStatus(HttpServletResponse.SC_OK);
 				writer.write("{\"task_completed\": " + completed + "}");
 			}
 			else {
@@ -313,8 +318,35 @@ public class CasSolrAdminController {
 			writer.write("{error: " + ex.getMessage() + "}");
 			logger.error(ex);
 		}		
-    }       
-    
+    }
+
+    @RequestMapping(value = "/admin/reloadWordpress", method = RequestMethod.GET)
+    public void reloadWordpress(HttpServletRequest request,
+            HttpServletResponse response) throws Exception{
+    	String remoteuser = request.getRemoteUser();
+    	response.setContentType("application/json");
+		boolean completed = true;
+		PrintWriter writer = null;
+		try{
+			writer = response.getWriter();
+			if (remoteuser != null && request.isUserInRole(ADMIN_ROLE)) {
+                int pagesLoaded = createWordPressIndex.loadWordpress();
+                logger.info("Crawled and indexed "+ pagesLoaded + " pages.");
+				response.setStatus(HttpServletResponse.SC_OK);
+				writer.write("{\"task_completed\": " + completed + "}");
+			}
+			else {
+				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+				writer.write("{\"response\": \"You need to have the appropriate role (" + ADMIN_ROLE + ") to access this service. task completed:" + completed + "\"}");
+			}
+		}
+		catch(Exception ex){
+			response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+			writer.write("{error: " + ex.getMessage() + "}");
+			logger.error(ex);
+		}
+    }
+
     @RequestMapping(value="/admin/reopenIndex", method =RequestMethod.GET)
     public @ResponseBody String reopenIndex(HttpServletResponse response) throws Exception{
         //reopen the SOLR index to take advantage of terms that have been indexed external to the webapp.
@@ -474,7 +506,11 @@ public class CasSolrAdminController {
 		this.xmlReportUtil = xmlReportUtil;
 	}
 
-	public void setBiocacheHarvester(BiocacheHarvester biocacheHarvester) {
+    public void setCreateWordPressIndex(CreateWordPressIndex createWordPressIndex) {
+        this.createWordPressIndex = createWordPressIndex;
+    }
+
+    public void setBiocacheHarvester(BiocacheHarvester biocacheHarvester) {
 		this.biocacheHarvester = biocacheHarvester;
 	}
 
