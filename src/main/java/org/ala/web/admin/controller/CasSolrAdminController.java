@@ -293,18 +293,12 @@ public class CasSolrAdminController {
             HttpServletResponse response) throws Exception{
     	String remoteuser = request.getRemoteUser();
     	response.setContentType("application/json");
-		boolean completed = true;
 		PrintWriter writer = null;
+        boolean completed = true;
 		try{
 			writer = response.getWriter();
 			if (remoteuser != null && request.isUserInRole(ADMIN_ROLE)) {
-				try { completed = completed && collectionsDao.reloadLayers(); } catch(Exception e) { completed = false; }
-				try { completed = completed && collectionsDao.reloadRegions();  } catch(Exception e) { completed = false; }
-				try { completed = completed && collectionsDao.reloadCollections();  } catch(Exception e) { completed = false; }
-				try { completed = completed && collectionsDao.reloadDataProviders();  } catch(Exception e) { completed = false; }
-				try { completed = completed && collectionsDao.reloadDataResources();  } catch(Exception e) { completed = false; }
-				try { completed = completed && collectionsDao.reloadInstitutions();  } catch(Exception e) { completed = false; }
-                try { completed = completed && createWordPressIndex.loadWordpress()>0;  } catch(Exception e) { completed = false; }
+                completed = reloadAll();
 				response.setStatus(HttpServletResponse.SC_OK);
 				writer.write("{\"task_completed\": " + completed + "}");
 			}
@@ -318,6 +312,20 @@ public class CasSolrAdminController {
 			writer.write("{error: " + ex.getMessage() + "}");
 			logger.error(ex);
 		}		
+    }
+
+    public boolean reloadAll() {
+        logger.info("Starting a reload of index....");
+        boolean completed = true;
+        try { completed = completed && collectionsDao.reloadLayers(); } catch(Exception e) { completed = false; }
+        try { completed = completed && collectionsDao.reloadRegions();  } catch(Exception e) { completed = false; }
+        try { completed = completed && collectionsDao.reloadCollections();  } catch(Exception e) { completed = false; }
+        try { completed = completed && collectionsDao.reloadDataProviders();  } catch(Exception e) { completed = false; }
+        try { completed = completed && collectionsDao.reloadDataResources();  } catch(Exception e) { completed = false; }
+        try { completed = completed && collectionsDao.reloadInstitutions();  } catch(Exception e) { completed = false; }
+        try { completed = completed && createWordPressIndex.loadWordpress()>0;  } catch(Exception e) { completed = false; }
+        logger.info("Reload of index finished. Success: " + completed);
+        return completed;
     }
 
     @RequestMapping(value = "/admin/reloadWordpress", method = RequestMethod.GET)

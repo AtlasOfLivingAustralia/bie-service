@@ -17,10 +17,8 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
             .examples  { margin-left:90px; }
             strong { font-weight:bold; }
         </style>
-
     	<div class="section">
         <h1> Web Services </h1>
-		<br/>
         <p>
             These webservices provide taxon search capabilities and taxon profile information.
             <br/>
@@ -139,55 +137,60 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
         <div style="display:none" id="dialog-modal" title="Process dialog">
 	        <p>Process in progress. <br/>Please wait..........</p>
         </div>
-                    	<script type="text/javascript">
-                    		function callAdminWs(wsName) {
-                                var url = "${pageContext.request.contextPath}/admin/" + wsName;
-                        		$( "#dialog:ui-dialog" ).dialog( "destroy" );
-                        		
-                        		$( "#dialog-modal" ).dialog({
-                        			height: 140,
-                        			modal: true
-                        		});
+        <script type="text/javascript">
+            function callAdminWs(wsName) {
+                var url = "${pageContext.request.contextPath}/admin/" + wsName;
+                $( "#dialog:ui-dialog" ).dialog( "destroy" );
 
-				                var jqxhr = $.getJSON(url, function(data){
-				                	
-				                	$( "#dialog-modal" ).dialog("close");
-                                    alert("response Text: " + jqxhr.responseText + " (" + jqxhr.status + ")");
-									
-				                }).error(function(jqxhr) {
-				                	$( "#dialog-modal" ).dialog("close");
-                                    // catch ajax errors (requiers JQuery 1.5+) - usually 500 error
-                                    if(jqxhr.responseText != null && jqxhr.responseText.length > 0){
-                                    	alert('response Text: ' + jqxhr.responseText + " (" + jqxhr.status + ")");
-				                	}
-                                });
+                $( "#dialog-modal" ).dialog({
+                    height: 140,
+                    modal: true
+                });
 
-	                        }
-                    	</script>
+                var jqxhr = $.getJSON(url, function(data){
 
-            <ul class="webserviceList">
-        		<li><strong>Check for Read Only Mode:</strong><a href="javascript:callAdminWs('isReadOnly')">&nbsp;${pageContext.request.contextPath}/admin/isReadOnly;&nbsp;</a></li>
-        		<li><strong>Reopen SOLR index:</strong> <a href="${initParam.serverName}/admin/reopenIndex">/admin/reopenIndex</a></li> </li>
-        		<li><strong>View list of SOLR index fields:</strong> <a href="${initParam.serverName}/admin/indexFields">/admin/indexFields</a></li>
-        	</ul>
-        	
-        	The remaining services in the section is support GET method and protected by CAS security framework. To consume these services must logon into CAS server.<br/>
-        	All services will place the bie-webapp in read only mode until the process has been completed
-            <ul class="webserviceList">
-	        	<li><strong>Optimise Index: </strong>/admin/optimise - optimise embedded solr index.</strong>
-	        	</li>
-	        	<li><strong>Reload All Ranks: </strong>/admin/reloadAllRanks - reapply all rankings from 'rk' to 'tc' table.
-				</li>
-				<li><strong>Reload Fish Common Name Default Value: </strong>/admin/loadCaab - reload default common name rank value into 'rk' table.
-				</li>  
-	        	<li><strong>Reload Collections: </strong>/admin/reloadCollections - reload the collections into Solr index.</strong>
-	        	</li>
-	        	<li><strong>Reload Institutions: </strong>/admin/reloadreloadInstitutions - reload the institutions into Solr index.
-				</li>
-				<li><strong>Reload Data Providers: </strong>/admin/reloadDataProviders - reload the data providers into Solr index.
-				</li>  
-				<li><strong>Reload Data Resources: </strong>/admin/reloadDataResources - reload the datasets into Solr index.
-				</li>        					      					      					      	
-        	</ul>       
+                    $( "#dialog-modal" ).dialog("close");
+                    alert("response Text: " + jqxhr.responseText + " (" + jqxhr.status + ")");
+
+                }).error(function(jqxhr) {
+                    $( "#dialog-modal" ).dialog("close");
+                    // catch ajax errors (requiers JQuery 1.5+) - usually 500 error
+                    if(jqxhr.responseText != null && jqxhr.responseText.length > 0){
+                        alert('response Text: ' + jqxhr.responseText + " (" + jqxhr.status + ")");
+                    }
+                });
+            }
+        </script>
+        <ul class="webserviceList">
+            <li><strong>Check for Read Only Mode:</strong><a href="javascript:callAdminWs('isReadOnly')">&nbsp;${pageContext.request.contextPath}/admin/isReadOnly;&nbsp;</a></li>
+            <li><strong>Reopen SOLR index:</strong> <a href="${initParam.serverName}/admin/reopenIndex">/admin/reopenIndex</a></li> </li>
+            <li><strong>View list of SOLR index fields:</strong> <a href="${initParam.serverName}/admin/indexFields">/admin/indexFields</a></li>
+        </ul>
+        The remaining services in the section is support GET method and protected by CAS security framework. To consume these services must logon into CAS server.<br/>
+        All services will place the bie-webapp in read only mode until the process has been completed.
+        <ul class="webserviceList">
+            <li><strong>Optimise Index: </strong>/admin/optimise - optimise embedded solr index.</strong>
+            </li>
+            <li><strong>Reload All Ranks: </strong>/admin/reloadAllRanks - reapply all rankings from 'rk' to 'tc' table.
+            </li>
+            <li><strong>Reload Fish Common Name Default Value: </strong>/admin/loadCaab - reload default common name rank value into 'rk' table.
+            </li>
+            <li><strong>Reload Collections: </strong>/admin/reloadCollections - reload the collections into Solr index.</strong>
+            </li>
+            <li><strong>Reload Institutions: </strong>/admin/reloadreloadInstitutions - reload the institutions into Solr index.
+            </li>
+            <li><strong>Reload Data Providers: </strong>/admin/reloadDataProviders - reload the data providers into Solr index.
+            </li>
+            <li><strong>Reload Data Resources: </strong>/admin/reloadDataResources - reload the datasets into Solr index.
+            </li>
+            <li><strong>Reload Layers: </strong>/admin/reloadDataResources - reload the layers into Solr index.
+            </li>
+            <li><strong>Reload Regions: </strong>/admin/reloadDataResources - reload the regions into Solr index.
+            </li>
+            <li><strong>Reload Wordpress: </strong>/admin/reloadWordpress - reload the news & blogs into Solr index.
+            </li>
+            <li><strong>Reload All: </strong>/admin/reloadAll - reload all the above into Solr index.
+            </li>
+        </ul>
     </body>
 </html>

@@ -4,13 +4,13 @@
        xmlns:p="http://www.springframework.org/schema/p"
        xmlns:mvc="http://www.springframework.org/schema/mvc"
        xmlns:context="http://www.springframework.org/schema/context"
-       xsi:schemaLocation="
-           http://www.springframework.org/schema/beans
+       xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
            http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
            http://www.springframework.org/schema/context
            http://www.springframework.org/schema/context/spring-context-3.0.xsd
-           http://www.springframework.org/schema/mvc 
-           http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd">
+           http://www.springframework.org/schema/mvc
+           http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
     
     <!-- Scans the classpath of this application for @Components to deploy as beans -->
     <context:component-scan base-package="org.ala.web"/>
@@ -157,5 +157,11 @@
      <bean id="collectionDao" class="org.ala.web.admin.dao.Impl.CollectionDaoImpl">
         <constructor-arg ref="restTemplate"/>
     </bean>
-   
+
+    <task:scheduler id="reloadIndexScheduler" pool-size="1" />
+    <task:scheduled-tasks scheduler="reloadIndexScheduler">
+        <!-- run at 7:15 everyday -->
+        <!--<task:scheduled ref="casSolrAdminController" method="reloadAll" cron="15 4 * * * *"/>-->
+        <task:scheduled ref="casSolrAdminController" method="reloadAll" cron="0 15 4 * * *"/>
+    </task:scheduled-tasks>
 </beans>
