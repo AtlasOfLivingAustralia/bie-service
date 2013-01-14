@@ -76,11 +76,8 @@ public class SearchController {
 	
 	/** Name of view for list of taxa */
 	private final String SEARCH_LIST = "search/list"; // "species/list" || "search/species"
-	private final String SEARCH = "search"; //default view when empty query submitted
     private final String AUTO_JSON = "search/autoJson";
-    /** WordPress SOLR URI */
-    private final String WP_SOLR_URL = "http://alaprodweb1-cbr.vm.csiro.au/solr/select/?wt=json&q=";
-    
+
     private String defaultDownloadFields="";
     private Properties properties;
 
@@ -89,7 +86,6 @@ public class SearchController {
     public SearchController(){
     	mapper.getDeserializationConfig().set(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     	//get the i18n map to use for download fields
-//    	String path = "localization/stat_codes.properties";    	
     	properties = new Properties();
     	try {
     	    properties.load(getClass().getResourceAsStream("/messages.properties"));
@@ -131,7 +127,7 @@ public class SearchController {
         
         if(StringUtils.isBlank(fields))
             fields = defaultDownloadFields;
-      //reverse the sort direction for the "score" field a normal sort should be descending while a reverse sort should be ascending
+        //reverse the sort direction for the "score" field a normal sort should be descending while a reverse sort should be ascending
         sortDirection = getSortDirection(sortField, sortDirection);
         java.io.OutputStream output = response.getOutputStream();
         String[] afields = fields.split(",");
@@ -179,17 +175,9 @@ public class SearchController {
 			@RequestParam(value="sort", required=false, defaultValue="score") String sortField,
 			@RequestParam(value="dir", required=false, defaultValue ="asc") String sortDirection,
 			@RequestParam(value="title", required=false, defaultValue ="Search Results") String title,
+			@RequestParam(value="facets", required=false) String[] facets,
 		    Model model) throws Exception {
 		
-//		if (StringUtils.isEmpty(query) && (filterQuery == null || filterQuery.length == 0)) {
-//			return SEARCH;
-//		}
-		
-		//search across the board, select tab with highest score - with a facet on other types
-		//if no results for species - pick another tab
-		//initial across the board search
-		//with facets on TAXON, REGION, DATASET, DATAPROVIDER, COLLECTION, INSTITUTION
-
         if (startIndex == null) {
             startIndex = 0;
         }
@@ -223,7 +211,7 @@ public class SearchController {
             formattedQuery.append(ClientUtils.escapeQueryChars(bits[0]));
             formattedQuery.append("\\:");
             formattedQuery.append(ClientUtils.escapeQueryChars(bits[1]));
-            searchResults = searchDao.doFullTextSearch(formattedQuery.toString(), filterQuery, startIndex, pageSize, sortField, sortDirection);
+            searchResults = searchDao.doFullTextSearch(formattedQuery.toString(), filterQuery, (String[]) null, startIndex, pageSize, sortField, sortDirection);
             
     		searchResults.setResults(removedDuplicateCommonName(searchResults.getResults()));    		
             repoUrlUtils.fixRepoUrls(searchResults);
@@ -244,42 +232,23 @@ public class SearchController {
         	boolean foundExact = false;
 
         	// exact search australian only
-        	//filterQuery = new String[]{"australian_s:recorded"};
             filterQuery = new String[]{};
         	searchResults = searchDao.doExactTextSearch(query, filterQuery, startIndex, pageSize, sortField, sortDirection);
 
         	if(searchResults.getResults() != null && !searchResults.getResults().isEmpty()){
         		foundExact = true;
-//        		model.addAttribute("isAustralian", true);
-//        	} else {
-//    			filterQuery = new String[]{};
-//            	searchResults = searchDao.doExactTextSearch(query, filterQuery, startIndex, pageSize, sortField, sortDirection);
-//            	if(searchResults.getResults() != null && !searchResults.getResults().isEmpty()){
-//            		foundExact = true;
-//            		model.addAttribute("isAustralian", false);
-//            	}
     		}
 
         	if(foundExact){
-        		searchResults = searchDao.doFullTextSearch(query, filterQuery, startIndex, pageSize, sortField, sortDirection);
+        		searchResults = searchDao.doFullTextSearch(query, filterQuery, facets, startIndex, pageSize, sortField, sortDirection);
         	} else {
-	        	//filterQuery = new String[]{"australian_s:recorded"};
-	        	searchResults = searchDao.doFullTextSearch(query, filterQuery, startIndex, pageSize, sortField, sortDirection);
-	        	result = searchResults.getResults();
-//	        	if(result == null || result.size() < 1){
-//	        		filterQuery = new String[]{""};
-//	        		searchResults = searchDao.doFullTextSearch(query, filterQuery, startIndex, pageSize, sortField, sortDirection);
-//	        		model.addAttribute("isAustralian", false);
-//	        	}
-//	        	else{
-//	        		model.addAttribute("isAustralian", true);
-//	        	}
+	        	searchResults = searchDao.doFullTextSearch(query, filterQuery, facets, startIndex, pageSize, sortField, sortDirection);
         	}
         }
 		
 		// if searchResults is null then it is consequence search request.
 		if(searchResults == null){
-			searchResults = searchDao.doFullTextSearch(query, filterQuery, startIndex, pageSize, sortField, sortDirection);
+			searchResults = searchDao.doFullTextSearch(query, filterQuery, (String[]) null, startIndex, pageSize, sortField, sortDirection);
 		}		
 		searchResults.setResults(removedDuplicateCommonName(searchResults.getResults()));
 		
@@ -308,6 +277,9 @@ public class SearchController {
 	        			}
 	        			else if(uid.startsWith("co")){
 	        				jsonString = PageUtils.getUrlContentAsJsonString("http://collections.ala.org.au/ws/collection/" + uid);
+	        			}
+	        			else if(uid.startsWith("dh")){
+	        				jsonString = PageUtils.getUrlContentAsJsonString("http://collections.ala.org.au/ws/dataHub/" + uid);
 	        			}
 	        			ObjectMapper om = new ObjectMapper();
 	        	        Map map = om.readValue(jsonString, Map.class);        	        
@@ -345,7 +317,7 @@ public class SearchController {
         model.addAttribute("totalRecords", searchResults.getTotalRecords());
         model.addAttribute("lastPage", calculateLastPage(searchResults.getTotalRecords(), pageSize));
 
-        logger.debug("Selected view: "+SEARCH_LIST);
+        logger.debug("Selected view: " + SEARCH_LIST);
         
 		return SEARCH_LIST;
 	}
@@ -420,6 +392,7 @@ public class SearchController {
 			@RequestParam(value="sort", required=false, defaultValue="score") String sortField,
 			@RequestParam(value="dir", required=false, defaultValue ="asc") String sortDirection,
 			@RequestParam(value="title", required=false, defaultValue ="Search Results") String title,
+            @RequestParam(value="facet", required=false) String[] facets,
 		    Model model,
             HttpServletRequest request) throws Exception {
 		
@@ -446,9 +419,9 @@ public class SearchController {
             formattedQuery.append(ClientUtils.escapeQueryChars(bits[0]));
             formattedQuery.append("\\:");
             formattedQuery.append(ClientUtils.escapeQueryChars(bits[1]));
-            searchResults = searchDao.doFullTextSearch(formattedQuery.toString(), filterQuery, startIndex, pageSize, sortField, sortDirection);
+            searchResults = searchDao.doFullTextSearch(formattedQuery.toString(), filterQuery, facets, startIndex, pageSize, sortField, sortDirection);
         } else {
-            searchResults = searchDao.doFullTextSearch(query, filterQuery, startIndex, pageSize, sortField, sortDirection);
+            searchResults = searchDao.doFullTextSearch(query, filterQuery, facets, startIndex, pageSize, sortField, sortDirection);
         }
 
         //get occurrence count by biocache ws
@@ -521,24 +494,6 @@ public class SearchController {
         return facetMap;
     }
 
-    /**
-	 * Retrieve content as String.
-	 *
-	 * @param url
-	 * @return
-	 * @throws Exception
-	 */
-	public static String getUrlContentAsString(String url) throws Exception {
-		HttpClient httpClient = new HttpClient();
-		GetMethod gm = new GetMethod(url);
-		gm.setFollowRedirects(true);
-		httpClient.executeMethod(gm);
-		// String requestCharset = gm.getRequestCharSet();
-		String content = gm.getResponseBodyAsString();
-		// content = new String(content.getBytes(requestCharset), "UTF-8");
-		return content;
-	}
-    
      /**
      * Calculate the last page number for pagination
      * 

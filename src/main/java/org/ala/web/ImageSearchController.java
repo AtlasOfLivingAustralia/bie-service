@@ -97,7 +97,9 @@ public class ImageSearchController {
         Integer noOfColumns = screenWidth / (maxWidthImages + 2);
         Integer pageSize = noOfColumns * 12;
 
-		SearchResultsDTO<SearchDTO> results = searchDao.doFullTextSearch(null, (String[]) filterQueries.toArray(new String[0]), startIndex, pageSize, sortField, sortDirection);
+		SearchResultsDTO<SearchDTO> results = searchDao.doFullTextSearch(null, (String[]) filterQueries.toArray(new String[0]),
+                (String[]) null,
+                startIndex, pageSize, sortField, sortDirection);
 		return repoUrlUtils.fixRepoUrls(results);
 	}
 	
@@ -114,7 +116,8 @@ public class ImageSearchController {
         Integer noOfColumns = screenWidth / (maxWidthImages + 2);
         Integer pageSize = noOfColumns * 12;
 
-		SearchResultsDTO<SearchDTO> results = searchDao.doFullTextSearch(null, (String[]) filterQueries.toArray(new String[0]), startIndex, pageSize, sortField, sortDirection);
+		SearchResultsDTO<SearchDTO> results = searchDao.doFullTextSearch(null, (String[]) filterQueries.toArray(new String[0]),
+                (String[]) null, startIndex, pageSize, sortField, sortDirection);
 		return repoUrlUtils.fixRepoUrls(results);
 	}
 
@@ -222,7 +225,8 @@ public class ImageSearchController {
 
     		filterQueries.add(taxonRank+":"+scientificName);
 
-    		SearchResultsDTO<SearchDTO> results = searchDao.doFullTextSearch(null, (String[]) filterQueries.toArray(new String[0]), startIndex, pageSize, sortField, sortDirection);
+    		SearchResultsDTO<SearchDTO> results = searchDao.doFullTextSearch(null, (String[]) filterQueries.toArray(new String[0]),
+                    (String[]) null, startIndex, pageSize, sortField, sortDirection);
     		model.addAttribute("results", repoUrlUtils.fixRepoUrls(results));
 
 	    }
@@ -282,7 +286,8 @@ public class ImageSearchController {
         filterQueries.add("left:["+leftNSValue+" TO "+rightNSValue+"]");
         filterQueries.add("rankId:[" + 7000 +" TO * ]");
 
-		SearchResultsDTO<SearchDTO> results = searchDao.doFullTextSearch(null, (String[]) filterQueries.toArray(new String[0]), startIndex, pageSize, sortField, sortDirection);
+		SearchResultsDTO<SearchDTO> results = searchDao.doFullTextSearch(null, (String[]) filterQueries.toArray(new String[0]),
+                (String[]) null, startIndex, pageSize, sortField, sortDirection);
 		results = repoUrlUtils.fixRepoUrls(results);
 		
 		return results;
@@ -320,7 +325,8 @@ public class ImageSearchController {
 	
 			filterQueries.add(taxonRank+":"+scientificName);
 	
-			SearchResultsDTO<SearchDTO> results = searchDao.doFullTextSearch(null, (String[]) filterQueries.toArray(new String[0]), startIndex, pageSize, sortField, sortDirection);
+			SearchResultsDTO<SearchDTO> results = searchDao.doFullTextSearch(null, (String[]) filterQueries.toArray(new String[0]),
+                    (String[]) null, startIndex, pageSize, sortField, sortDirection);
 			results = repoUrlUtils.fixRepoUrls(results);
 			
 			return results;

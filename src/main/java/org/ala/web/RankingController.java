@@ -110,9 +110,6 @@ public class RankingController {
 	 * 
 	 * @param guid
 	 * @param name
-	 * @param uri
-	 * @param commonName
-	 * @param infosourceId
 	 * @param positive
 	 * @param request
 	 * @param response

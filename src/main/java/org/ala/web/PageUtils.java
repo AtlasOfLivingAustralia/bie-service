@@ -29,7 +29,6 @@ public class PageUtils {
     /** The URI for JSON data for static occurrence map */
 	@Deprecated
     public static final String SPATIAL_JSON_URL = "http://spatial.ala.org.au/alaspatial/ws/density/map?species_lsid=";
-	
 
     /**
      * Fix for some info sources where multiple common names are produced.
