@@ -234,41 +234,45 @@ public class SpeciesController {
     }
 
     public TaxonDTO createTaxonDTO(ExtendedTaxonConceptDTO edto){
-        TaxonDTO t = new TaxonDTO();
-        t.setGuid(edto.getTaxonConcept().getGuid());
-        t.setScientificName(edto.getTaxonConcept().getNameString());
-        t.setTaxonInfosourceURL(edto.getTaxonConcept().getInfoSourceURL());
-        t.setTaxonInfosourceName(edto.getTaxonConcept().getInfoSourceName());
-        t.setYear(edto.getTaxonConcept().getAuthorYear());
-        t.setScientificNameAuthorship(edto.getTaxonConcept().getAuthor());
-        t.setRank(edto.getTaxonConcept().getRankString());
-        t.setRankID(edto.getTaxonConcept().getRankID());
-        if(edto.getTaxonName()!=null){
-            t.setAuthor(edto.getTaxonName().getAuthorship());
-        } else {
-            t.setAuthor(edto.getTaxonConcept().getAuthor());
-        }
+        if(edto.getTaxonConcept() !=null){
+            TaxonDTO t = new TaxonDTO();
+            t.setGuid(edto.getTaxonConcept().getGuid());
+            t.setScientificName(edto.getTaxonConcept().getNameString());
+            t.setTaxonInfosourceURL(edto.getTaxonConcept().getInfoSourceURL());
+            t.setTaxonInfosourceName(edto.getTaxonConcept().getInfoSourceName());
+            t.setYear(edto.getTaxonConcept().getAuthorYear());
+            t.setScientificNameAuthorship(edto.getTaxonConcept().getAuthor());
+            t.setRank(edto.getTaxonConcept().getRankString());
+            t.setRankID(edto.getTaxonConcept().getRankID());
+            if(edto.getTaxonName()!=null){
+                t.setAuthor(edto.getTaxonName().getAuthorship());
+            } else {
+                t.setAuthor(edto.getTaxonConcept().getAuthor());
+            }
 
-        if(edto.getClassification()!=null){
-            t.setFamily(edto.getClassification().getFamily());
-            t.setKingdom(edto.getClassification().getKingdom());
+            if(edto.getClassification()!=null){
+                t.setFamily(edto.getClassification().getFamily());
+                t.setKingdom(edto.getClassification().getKingdom());
+            }
+            if(!edto.getCommonNames().isEmpty()){
+                CommonName cn = edto.getCommonNames().get(0);
+                t.setCommonName(cn.getNameString());
+                t.setCommonNameGuid(cn.getGuid());
+            }
+            if(!edto.getImages().isEmpty()){
+                Image image = edto.getImages().get(0);
+                t.setImageURL(image.getRepoLocation());
+                t.setThumbnail(image.getThumbnail());
+                t.setImageRights(image.getRights());
+                t.setImageCreator(image.getCreator());
+                t.setImageisPartOf(image.getIsPartOf());
+                t.setImageInfosourceName(image.getInfoSourceName());
+                t.setImageInfosourceURL(image.getInfoSourceURL());
+            }
+            return t;
+        } else {
+            return null;
         }
-        if(!edto.getCommonNames().isEmpty()){
-            CommonName cn = edto.getCommonNames().get(0);
-            t.setCommonName(cn.getNameString());
-            t.setCommonNameGuid(cn.getGuid());
-        }
-        if(!edto.getImages().isEmpty()){
-            Image image = edto.getImages().get(0);
-            t.setImageURL(image.getRepoLocation());
-            t.setThumbnail(image.getThumbnail());
-            t.setImageRights(image.getRights());
-            t.setImageCreator(image.getCreator());
-            t.setImageisPartOf(image.getIsPartOf());
-            t.setImageInfosourceName(image.getInfoSourceName());
-            t.setImageInfosourceURL(image.getInfoSourceURL());
-        }
-        return t;
     }
 
     /**
@@ -986,7 +990,9 @@ public class SpeciesController {
         List<ExtendedTaxonConceptDTO> tcs = taxonConceptDao.getExtendedTaxonConceptByGuids(guids);
         for (ExtendedTaxonConceptDTO tc : tcs) {
             repoUrlUtils.fixRepoUrls(tc);
-            taxa.add(createTaxonDTO(tc));
+            TaxonDTO taxonDTO = createTaxonDTO(tc);
+            if(taxonDTO !=null)
+                taxa.add(taxonDTO);
         }
         return taxa;
     }
