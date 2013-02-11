@@ -50,6 +50,10 @@
         			<groupId>org.codehaus.jackson</groupId>
             		<artifactId>jackson-mapper-asl</artifactId>
         		</exclusion>
+        		<exclusion>
+        			<artifactId>lucene-analyzers</artifactId>
+        			<groupId>org.apache.lucene</groupId>
+        		</exclusion>
             </exclusions>
         </dependency>
         <!-- BIE Repository -->
