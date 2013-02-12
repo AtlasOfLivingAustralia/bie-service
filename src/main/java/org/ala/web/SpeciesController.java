@@ -657,7 +657,7 @@ public class SpeciesController {
       }
       //check for a scientific name first - this will lookup in the name matching index.  This will produce the correct result in a majority of scientific name cases.
       if(lsid == null || lsid.length() < 1){            
-          lsid = taxonConceptDao.findLsidForSearch(name);
+          lsid = taxonConceptDao.findLsidForSearch(name, true);
       }
 
       if(lsid == null || lsid.length() < 1){
@@ -958,8 +958,7 @@ public class SpeciesController {
      */
     @RequestMapping(value = "/species/namesFromGuids.json")
     public @ResponseBody List<String> getNamesForGuids(@RequestParam(value="guid", required=true) String[] guids) {
-        List<String> names = new ArrayList<String>();
-        
+        List<String> names = new ArrayList<String>();        
         for (String guid : guids) {
             String name = null;
             try {
