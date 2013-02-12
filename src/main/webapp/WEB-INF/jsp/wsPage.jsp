@@ -165,6 +165,11 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
             <li><strong>Check for Read Only Mode:</strong><a href="javascript:callAdminWs('isReadOnly')">&nbsp;${pageContext.request.contextPath}/admin/isReadOnly;&nbsp;</a></li>
             <li><strong>Reopen SOLR index:</strong> <a href="${initParam.serverName}/admin/reopenIndex">/admin/reopenIndex</a></li> </li>
             <li><strong>View list of SOLR index fields:</strong> <a href="${initParam.serverName}/admin/indexFields">/admin/indexFields</a></li>
+            <li><strong>Reindex list of GUIDs:</strong>                
+            Used to perform a live reindex of the supplied GUIDs.
+                <ul class="paramList">
+                    <li>HTTP POST a JSON body containing an array of GUIDs.</li>
+                </ul>
         </ul>
         The remaining services in the section is support GET method and protected by CAS security framework. To consume these services must logon into CAS server.<br/>
         All services will place the bie-webapp in read only mode until the process has been completed.

@@ -1,6 +1,7 @@
 package org.ala.web.admin.controller;
 
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -9,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.ala.dao.RankingDao;
 import org.ala.dao.SolrUtils;
+import org.ala.dao.TaxonConceptDao;
 import org.ala.dao.SolrUtils.IndexFieldDTO;
 import org.ala.harvester.BiocacheHarvester;
 import org.ala.hbase.RepoDataLoader;
@@ -18,6 +20,7 @@ import org.ala.util.ReadOnlyLock;
 import org.ala.util.XmlReportUtil;
 import org.ala.web.admin.dao.CollectionDao;
 import org.apache.log4j.Logger;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -50,7 +53,10 @@ public class CasSolrAdminController {
 	protected CreateWordPressIndex createWordPressIndex;
 	
 	@Inject
-	protected RepoDataLoader repoDataLoader; 
+	protected RepoDataLoader repoDataLoader;
+	
+	@Inject
+  private TaxonConceptDao taxonConceptDao;
 	
 	@Inject
     protected SolrUtils solrUtils;
@@ -355,6 +361,15 @@ public class CasSolrAdminController {
 		}
     }
 
+    
+    @RequestMapping(value="/admin/reindex",method=RequestMethod.POST)
+    public @ResponseBody String reindexRecords(HttpServletRequest request) throws Exception {
+        ObjectMapper om = new ObjectMapper();       
+        String[] guids = om.readValue(request.getInputStream(), (new String[0]).getClass());        
+        taxonConceptDao.reindexTaxa(Arrays.asList(guids));
+        return "{\"status\":\"Live reindex of supplied guids complete\"}";
+    }
+    
     @RequestMapping(value="/admin/reopenIndex", method =RequestMethod.GET)
     public @ResponseBody String reopenIndex(HttpServletResponse response) throws Exception{
         //reopen the SOLR index to take advantage of terms that have been indexed external to the webapp.
