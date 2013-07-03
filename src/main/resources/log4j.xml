@@ -11,7 +11,7 @@
     </filter>
   </appender>
   <appender name="FILE" class="org.apache.log4j.RollingFileAppender">
-    <param name="File" value="${catalina.base}/logs/bie-webapp.log"/>
+    <param name="File" value="${catalina.base}/logs/bie-service.log"/>
     <param name="Append" value="true"/>
     <param name="Threshold" value="INFO"/>
     <param name="MaxFileSize" value="200MB"/>
