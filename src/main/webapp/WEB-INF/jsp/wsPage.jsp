@@ -63,13 +63,13 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
                 </ul>
             </li>
 
-            <li><strong>Bulk lookup:</strong> /species/bulklookup.json<br/>
+            <li><strong>Bulk lookup:</strong> /ws/species/bulklookup.json<br/>
                 Used to provide a list of GUIDs.
                 <ul class="paramList">
                     <li>HTTP POST a JSON body containing an array of GUIDs or names.</li>
                 </ul>
             </li>
-            <li><strong>Bulk lookup based on guids: </strong> /species/guids/bulklookup.json<br/>
+            <li><strong>Bulk lookup based on guids: </strong> /ws/species/guids/bulklookup.json<br/>
             	A more efficient bulk lookup based on GUIDs.
             	<ul class="paramList">
                     <li>HTTP POST a JSON body containing an array of GUIDs.</li>
@@ -106,14 +106,14 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
             	<ul><li>imageType - thumbnail OR small </li></ul>
                 Examples, red kangaroo:
                <ul class="examples">
-                   <li><a href="${initParam.serverName}/species/image/thumbnail/urn:lsid:biodiversity.org.au:afd.taxon:aa745ff0-c776-4d0e-851d-369ba0e6f537">${initParam.serverName}/species/image/thumbnail/urn:lsid:biodiversity.org.au:afd.taxon:aa745ff0-c776-4d0e-851d-369ba0e6f537</a></li>
-                   <li><a href="${initParam.serverName}/species/image/small/urn:lsid:biodiversity.org.au:afd.taxon:aa745ff0-c776-4d0e-851d-369ba0e6f537">${initParam.serverName}/species/image/small/urn:lsid:biodiversity.org.au:afd.taxon:aa745ff0-c776-4d0e-851d-369ba0e6f537</a></li>
-                   <li><a href="${initParam.serverName}/species/image/large/urn:lsid:biodiversity.org.au:afd.taxon:aa745ff0-c776-4d0e-851d-369ba0e6f537">${initParam.serverName}/species/image/large/urn:lsid:biodiversity.org.au:afd.taxon:aa745ff0-c776-4d0e-851d-369ba0e6f537</a></li>
+                   <li><a href="${initParam.serverName}/ws/species/image/thumbnail/urn:lsid:biodiversity.org.au:afd.taxon:aa745ff0-c776-4d0e-851d-369ba0e6f537">${initParam.serverName}/ws/species/image/thumbnail/urn:lsid:biodiversity.org.au:afd.taxon:aa745ff0-c776-4d0e-851d-369ba0e6f537</a></li>
+                   <li><a href="${initParam.serverName}/ws/species/image/small/urn:lsid:biodiversity.org.au:afd.taxon:aa745ff0-c776-4d0e-851d-369ba0e6f537">${initParam.serverName}/ws/species/image/small/urn:lsid:biodiversity.org.au:afd.taxon:aa745ff0-c776-4d0e-851d-369ba0e6f537</a></li>
+                   <li><a href="${initParam.serverName}/ws/species/image/large/urn:lsid:biodiversity.org.au:afd.taxon:aa745ff0-c776-4d0e-851d-369ba0e6f537">${initParam.serverName}/ws/species/image/large/urn:lsid:biodiversity.org.au:afd.taxon:aa745ff0-c776-4d0e-851d-369ba0e6f537</a></li>
                </ul>
             </li>
-            <li><strong>Get Document Details:</strong> /species/document/{documentId}.json <br/>
+            <li><strong>Get Document Details:</strong> /ws/species/document/{documentId}.json <br/>
             JSON web service (AJAX) to return details for a repository document</li>
-            <li><strong>Get List Status:</strong> /species/status/{status}.json - needs request param definition. <br/>
+            <li><strong>Get List Status:</strong> /ws/species/status/{status}.json - needs request param definition. <br/>
             	Pest / Conservation status JSON. Params:
                 <ul class="paramList">
 	            	<li>status - status type </li>
@@ -124,11 +124,11 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
 	            	<li>dir - sort direction [asc/dec]</li>
 	            </ul>           
             </li>
-            <li><strong>Get Names For Guids:</strong> /species/namesFromGuids.json <br/>
+            <li><strong>Get Names For Guids:</strong> /ws/species/namesFromGuids.json <br/>
             	return a list of scientific names for an input list of GUIDs. Param:
                 <ul class="paramList"><li>guid - list of guids</li></ul>
             </li>
-            <li><strong>Get Synonym Names For Guid:</strong> /species/synonymsForGuid/{guid} <br/>
+            <li><strong>Get Synonym Names For Guid:</strong> /ws/species/synonymsForGuid/{guid} <br/>
             return a list of synonyms for a GUID/LSID</li>
         </ul>
 
@@ -163,8 +163,8 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
         </script>
         <ul class="webserviceList">
             <li><strong>Check for Read Only Mode:</strong><a href="javascript:callAdminWs('isReadOnly')">&nbsp;${pageContext.request.contextPath}/admin/isReadOnly;&nbsp;</a></li>
-            <li><strong>Reopen SOLR index:</strong> <a href="${initParam.serverName}/admin/reopenIndex">/admin/reopenIndex</a></li> </li>
-            <li><strong>View list of SOLR index fields:</strong> <a href="${initParam.serverName}/admin/indexFields">/admin/indexFields</a></li>
+            <li><strong>Reopen SOLR index:</strong> <a href="${initParam.serverName}/ws/admin/reopenIndex">/admin/reopenIndex</a></li> </li>
+            <li><strong>View list of SOLR index fields:</strong> <a href="${initParam.serverName}/ws/admin/indexFields">/admin/indexFields</a></li>
             <li><strong>Reindex list of GUIDs:</strong>                
             Used to perform a live reindex of the supplied GUIDs.
                 <ul class="paramList">
@@ -174,27 +174,27 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
         The remaining services in the section is support GET method and protected by CAS security framework. To consume these services must logon into CAS server.<br/>
         All services will place the bie-webapp in read only mode until the process has been completed.
         <ul class="webserviceList">
-            <li><strong>Optimise Index: </strong>/admin/optimise - optimise embedded solr index.</strong>
+            <li><strong>Optimise Index: </strong>/ws/admin/optimise - optimise embedded solr index.</strong>
             </li>
-            <li><strong>Reload All Ranks: </strong>/admin/reloadAllRanks - reapply all rankings from 'rk' to 'tc' table.
+            <li><strong>Reload All Ranks: </strong>/ws/admin/reloadAllRanks - reapply all rankings from 'rk' to 'tc' table.
             </li>
-            <li><strong>Reload Fish Common Name Default Value: </strong>/admin/loadCaab - reload default common name rank value into 'rk' table.
+            <li><strong>Reload Fish Common Name Default Value: </strong>/ws/admin/loadCaab - reload default common name rank value into 'rk' table.
             </li>
-            <li><strong>Reload Collections: </strong>/admin/reloadCollections - reload the collections into Solr index.</strong>
+            <li><strong>Reload Collections: </strong>/ws/admin/reloadCollections - reload the collections into Solr index.</strong>
             </li>
-            <li><strong>Reload Institutions: </strong>/admin/reloadreloadInstitutions - reload the institutions into Solr index.
+            <li><strong>Reload Institutions: </strong>/ws/admin/reloadreloadInstitutions - reload the institutions into Solr index.
             </li>
-            <li><strong>Reload Data Providers: </strong>/admin/reloadDataProviders - reload the data providers into Solr index.
+            <li><strong>Reload Data Providers: </strong>/ws/admin/reloadDataProviders - reload the data providers into Solr index.
             </li>
-            <li><strong>Reload Data Resources: </strong>/admin/reloadDataResources - reload the datasets into Solr index.
+            <li><strong>Reload Data Resources: </strong>/ws/admin/reloadDataResources - reload the datasets into Solr index.
             </li>
-            <li><strong>Reload Layers: </strong>/admin/reloadDataResources - reload the layers into Solr index.
+            <li><strong>Reload Layers: </strong>/ws/admin/reloadDataResources - reload the layers into Solr index.
             </li>
-            <li><strong>Reload Regions: </strong>/admin/reloadDataResources - reload the regions into Solr index.
+            <li><strong>Reload Regions: </strong>/ws/admin/reloadDataResources - reload the regions into Solr index.
             </li>
-            <li><strong>Reload Wordpress: </strong>/admin/reloadWordpress - reload the news & blogs into Solr index.
+            <li><strong>Reload Wordpress: </strong>/ws/admin/reloadWordpress - reload the news & blogs into Solr index.
             </li>
-            <li><strong>Reload All: </strong>/admin/reloadAll - reload all the above into Solr index.
+            <li><strong>Reload All: </strong>/ws/admin/reloadAll - reload all the above into Solr index.
             </li>
         </ul>
     </body>
