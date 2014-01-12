@@ -229,6 +229,10 @@ public class SpeciesController {
                 Image image = edto.getImages().get(0);
                 model.addAttribute("imageURL", image.getRepoLocation());
                 model.addAttribute("thumbnail", image.getThumbnail());
+                //Issue http://code.google.com/p/ala/issues/detail?id=295 
+                model.addAttribute("imageAttribution", image.getCreator());
+                model.addAttribute("imageLicense", image.getLicence());
+                model.addAttribute("imageMetadataUrl", image.getDcLocation());
             }
         }
     }
