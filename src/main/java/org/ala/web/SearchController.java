@@ -24,6 +24,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -45,7 +47,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.log4j.Logger;
 import org.apache.solr.client.solrj.util.ClientUtils;
-import org.apache.xalan.xsltc.compiler.Pattern;
+//import org.apache.xalan.xsltc.compiler.Pattern;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.stereotype.Controller;
@@ -80,6 +82,8 @@ public class SearchController {
 
     private String defaultDownloadFields="";
     private Properties properties;
+    
+    protected Pattern urnPattern = Pattern.compile("urn:[a-zA-Z0-9\\.:-]*");
 
     protected ObjectMapper mapper = new ObjectMapper();
     
@@ -94,6 +98,18 @@ public class SearchController {
     	    logger.error(e.getMessage(),e);
     	}
     }
+
+    private String prepareQuery(String query){
+        Matcher matcher =urnPattern.matcher(query);
+        StringBuffer sb = new StringBuffer();
+        while(matcher.find()){
+            matcher.appendReplacement(sb, ClientUtils.escapeQueryChars(matcher.group()).replaceAll("\\\\", "\\\\\\\\"));
+        }
+        matcher.appendTail(sb);
+        query = sb.toString();  
+        return query;
+    }
+    
 
     /**
      * Downloads the supplied fields to the SOLR query. NB this adds an extra fq for idxtype:TAXON
@@ -125,6 +141,7 @@ public class SearchController {
         //add the extra fq for idxtype=TAXON
         filterQuery = ArrayUtils.add(filterQuery, "idxtype:TAXON");
         
+        query = prepareQuery(query);      
         if(StringUtils.isBlank(fields))
             fields = defaultDownloadFields;
         //reverse the sort direction for the "score" field a normal sort should be descending while a reverse sort should be ascending
@@ -154,6 +171,9 @@ public class SearchController {
      * 1) Find exact match in Australia
      * 2) If 1) fails, Find exact match
      * 3) If 2) fails, Full search over everything
+	 *
+	 *
+	 * NQ 2014-01-13: TODO review this code
 	 *
 	 * @param query
 	 * @param filterQuery
@@ -212,8 +232,9 @@ public class SearchController {
             formattedQuery.append("\\:");
             formattedQuery.append(ClientUtils.escapeQueryChars(bits[1]));
             searchResults = searchDao.doFullTextSearch(formattedQuery.toString(), filterQuery, (String[]) null, startIndex, pageSize, sortField, sortDirection);
+
             
-    		searchResults.setResults(removedDuplicateCommonName(searchResults.getResults()));    		
+            searchResults.setResults(removedDuplicateCommonName(searchResults.getResults()));    		
             repoUrlUtils.fixRepoUrls(searchResults);
             //get occurrence count by biocache ws
             searchResults.setResults(populateOccurrenceCount(searchResults.getResults()));
@@ -224,7 +245,8 @@ public class SearchController {
             logger.debug("Selected view: " + SEARCH_LIST);
             return SEARCH_LIST;
         }
-
+        logger.debug("Query : " + query + " : " + ClientUtils.escapeQueryChars(query));
+        query = ClientUtils.escapeQueryChars(query);
         // if filter query is null only (empty is consequence search)
         // then it is init search, do extra process as below...        
         if (filterQuery == null) {
@@ -240,15 +262,15 @@ public class SearchController {
     		}
 
         	if(foundExact){
-        		searchResults = searchDao.doFullTextSearch(query, filterQuery, facets, startIndex, pageSize, sortField, sortDirection);
+        	    searchResults = searchDao.doFullTextSearch(query, filterQuery, facets, startIndex, pageSize, sortField, sortDirection);
         	} else {
-	        	searchResults = searchDao.doFullTextSearch(query, filterQuery, facets, startIndex, pageSize, sortField, sortDirection);
+	        	  searchResults = searchDao.doFullTextSearch(query, filterQuery, facets, startIndex, pageSize, sortField, sortDirection);
         	}
         }
 		
 		// if searchResults is null then it is consequence search request.
 		if(searchResults == null){
-			searchResults = searchDao.doFullTextSearch(query, filterQuery, (String[]) null, startIndex, pageSize, sortField, sortDirection);
+		    searchResults = searchDao.doFullTextSearch(query, filterQuery, (String[]) null, startIndex, pageSize, sortField, sortDirection);
 		}		
 		searchResults.setResults(removedDuplicateCommonName(searchResults.getResults()));
 		
@@ -336,7 +358,7 @@ public class SearchController {
 		        nameValuePairs.add(new NameValuePair("separator", ","));
 		        nameValuePairs.add(new NameValuePair("guids", org.apache.commons.lang.StringUtils.join(guids, ',')));
 		        String json = PageUtils.getUrlContentAsJsonStringByPost(biocacheServiceUrl +"/occurrences/taxaCount", nameValuePairs.toArray(new NameValuePair[]{}));
-	        
+		        logger.debug("JSON : " +json);
 	        	Map map = mapper.readValue(json, Map.class);	        
 		        for(SearchDTO o : results){
 		        	if(o instanceof SearchTaxonConceptDTO){
@@ -409,7 +431,7 @@ public class SearchController {
             sortDirection = "asc";
         }
         sortDirection = getSortDirection(sortField, sortDirection);
-
+        logger.debug("Starting to search...");
         //shortcut for searches with an LSID
         SearchResultsDTO<SearchDTO> searchResults = null;
         if(query !=null && query.startsWith("urn:")){
@@ -420,13 +442,15 @@ public class SearchController {
             formattedQuery.append("\\:");
             formattedQuery.append(ClientUtils.escapeQueryChars(bits[1]));
             searchResults = searchDao.doFullTextSearch(formattedQuery.toString(), filterQuery, facets, startIndex, pageSize, sortField, sortDirection);
+
         } else {
+            query = ClientUtils.escapeQueryChars(query);
             searchResults = searchDao.doFullTextSearch(query, filterQuery, facets, startIndex, pageSize, sortField, sortDirection);
         }
-
+        logger.debug("Finished the search...");
         //get occurrence count by biocache ws
         searchResults.setResults(populateOccurrenceCount(searchResults.getResults()));
-
+        logger.debug("Finished setting the results...");
         return new ModelAndView(SEARCH_LIST, "searchResults", searchResults);
 	}
     /**
