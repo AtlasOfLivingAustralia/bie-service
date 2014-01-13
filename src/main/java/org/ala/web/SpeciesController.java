@@ -999,6 +999,25 @@ public class SpeciesController {
         }
         return taxa;
     }
+    
+    
+    /**
+     * JSON web service to return a list of scientific names for an input list of GUIDs
+     * 
+     * @param guids
+     * @return a map of guid's to a list of associated name (where the first name is the accepted concept name) 
+     */
+    @RequestMapping(value = "/species/bulklookup/namesFromGuids.json")
+    public @ResponseBody Map<String,List<Map<String, String>>> getAllNamesForGuids(HttpServletRequest request) throws Exception {
+        ObjectMapper om = new ObjectMapper();
+        String[] guids = om.readValue(request.getInputStream(), (new String[0]).getClass());
+        Map<String,List<Map<String, String>>> results = new HashMap<String,List<Map<String, String>>>();
+        for(String guid:guids){
+            results.put(guid, getNamesForGuids(guid));
+        }
+        return results;
+    }
+    
 
     /**
      * JSON web service to return a list of synonyms for a GUID/LSID.
@@ -1022,7 +1041,7 @@ public class SpeciesController {
                 String name = tc.getNameString();
                 String author = (tc.getAuthor() != null) ? tc.getAuthor() : "";
                 String nameComplete = name;
-                // incosistent format in nameString - some include author and others don't...
+                // inconsistent format in nameString - some include author and others don't...
                 if (!author.isEmpty() && StringUtils.contains(name, author)) {
                     nameComplete = name;
                     name = StringUtils.remove(name, author).trim();
