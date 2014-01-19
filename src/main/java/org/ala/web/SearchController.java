@@ -106,9 +106,27 @@ public class SearchController {
             matcher.appendReplacement(sb, ClientUtils.escapeQueryChars(matcher.group()).replaceAll("\\\\", "\\\\\\\\"));
         }
         matcher.appendTail(sb);
-        query = sb.toString();  
+        query = sb.toString();        
         return query;
     }
+    /*
+     * A revised list of characters to escape in BIE SOLR searches.  We don't wish to escape the whitespace characters.
+     */
+    public static String bieEscapeQueryChars(String s) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+          char c = s.charAt(i);
+          // These characters are part of the query syntax and must be escaped
+          if (c == '\\' || c == '+' || c == '-' || c == '!'  || c == '(' || c == ')' || c == ':'
+            || c == '^' || c == '[' || c == ']' || c == '\"' || c == '{' || c == '}' || c == '~'
+            || c == '*' || c == '?' || c == '|' || c == '&'  || c == ';' || c == '/'
+            ) {
+            sb.append('\\');
+          }
+          sb.append(c);
+        }
+        return sb.toString();
+      }
     
 
     /**
@@ -246,7 +264,7 @@ public class SearchController {
             return SEARCH_LIST;
         }
         logger.debug("Query : " + query + " : " + ClientUtils.escapeQueryChars(query));
-        query = ClientUtils.escapeQueryChars(query);
+        query = bieEscapeQueryChars(query);
         // if filter query is null only (empty is consequence search)
         // then it is init search, do extra process as below...        
         if (filterQuery == null) {
@@ -444,7 +462,7 @@ public class SearchController {
             searchResults = searchDao.doFullTextSearch(formattedQuery.toString(), filterQuery, facets, startIndex, pageSize, sortField, sortDirection);
 
         } else {
-            query = ClientUtils.escapeQueryChars(query);
+            query = bieEscapeQueryChars(query);
             searchResults = searchDao.doFullTextSearch(query, filterQuery, facets, startIndex, pageSize, sortField, sortDirection);
         }
         logger.debug("Finished the search...");
