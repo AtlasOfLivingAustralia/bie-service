@@ -521,22 +521,36 @@ public class SpeciesController {
      * @throws Exception
      */
     @RequestMapping(value = {"/species/bulklookup.json","/ws/species/bulklookup.json"}, method = RequestMethod.POST)
-    public SearchDTO[] bulkImageLookup(HttpServletRequest request) throws Exception {
+    public SearchDTO[] bulkImageLookup(HttpServletRequest request, HttpServletResponse response) throws Exception {
         ObjectMapper om = new ObjectMapper();
-        String[] guids = om.readValue(request.getInputStream(), (new String[0]).getClass());
-        List<SearchDTO> resultSet = new ArrayList<SearchDTO>();
-        for(int i=0; i< guids.length; i++){
-            //Need to sort the scores descended to get the highest score first
-            SearchResultsDTO<SearchDTO> results = searchDao.findByName(IndexedTypes.TAXON, guids[i], null, 0, 1, "score", "desc");
-            if(results.getResults().isEmpty()){
-                results = searchDao.doExactTextSearch(guids[i], null, 0, 1, "score", "desc");
+        InputStream is = request.getInputStream();
+        if(is.available()>0){
+            try{
+            String[] guids = om.readValue(is, (new String[0]).getClass());
+            
+            List<SearchDTO> resultSet = new ArrayList<SearchDTO>();
+            for(int i=0; i< guids.length; i++){
+                //Need to sort the scores descended to get the highest score first
+                SearchResultsDTO<SearchDTO> results = searchDao.doExactTextSearch(guids[i], null, 0, 1, "score", "desc"); 
+                //if there is no exact scientific name attempt to find by name.
+                if(results.getResults().isEmpty()){
+                    results = searchDao.findByName(IndexedTypes.TAXON, guids[i], null, 0, 1, "score", "desc");
+                    
+                }
+                if(results.getTotalRecords() > 0){
+                    repoUrlUtils.fixRepoUrls(results);
+                    resultSet.addAll(results.getResults());
+                }
             }
-            if(results.getTotalRecords() > 0){
-                repoUrlUtils.fixRepoUrls(results);
-                resultSet.addAll(results.getResults());
+            return resultSet.toArray(new SearchDTO[0]);
+            } catch (Exception e){
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Format of input incorrect: " + e.getMessage());
+                return null;
             }
+        } else{
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to perform a bulklookup without a list of species");
+            return null;
         }
-        return resultSet.toArray(new SearchDTO[0]);
     }
     /**
      * A more efficient ws for looking up a batch of guids.
@@ -546,12 +560,18 @@ public class SpeciesController {
      * @throws Exception
      */
     @RequestMapping(value = {"/species/guids/bulklookup.json","/ws/species/guids/bulklookup.json"}, method = RequestMethod.POST)
-    public SearchDTO[] bulkImageLookupBasedOnGuids(HttpServletRequest request) throws Exception {
+    public SearchDTO[] bulkImageLookupBasedOnGuids(HttpServletRequest request, HttpServletResponse response) throws Exception {
         ObjectMapper om = new ObjectMapper();
-        String[] guids = om.readValue(request.getInputStream(), (new String[0]).getClass());
-        SearchDTO[] results= searchDao.findByGuids(guids).getResults().toArray(new SearchDTO[]{});
-        repoUrlUtils.fixRepoUrls(results);
-        return results;
+        InputStream is = request.getInputStream();
+        if(is.available()>0){
+            String[] guids = om.readValue(is, (new String[0]).getClass());
+            SearchDTO[] results= searchDao.findByGuids(guids).getResults().toArray(new SearchDTO[]{});
+            repoUrlUtils.fixRepoUrls(results);
+            return results;
+        } else{
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to perform a bulklookup without a list of guids");
+            return null;
+        }
     }
 
     /**
@@ -1008,14 +1028,20 @@ public class SpeciesController {
      * @return a map of guid's to a list of associated name (where the first name is the accepted concept name) 
      */
     @RequestMapping(value = "/species/bulklookup/namesFromGuids.json")
-    public @ResponseBody Map<String,List<Map<String, String>>> getAllNamesForGuids(HttpServletRequest request) throws Exception {
+    public @ResponseBody Map<String,List<Map<String, String>>> getAllNamesForGuids(HttpServletRequest request, HttpServletResponse response) throws Exception {
         ObjectMapper om = new ObjectMapper();
-        String[] guids = om.readValue(request.getInputStream(), (new String[0]).getClass());
-        Map<String,List<Map<String, String>>> results = new HashMap<String,List<Map<String, String>>>();
-        for(String guid:guids){
-            results.put(guid, getNamesForGuids(guid));
+        InputStream is = request.getInputStream();
+        if(is.available()>0){
+            String[] guids = om.readValue(is, (new String[0]).getClass());
+            Map<String,List<Map<String, String>>> results = new HashMap<String,List<Map<String, String>>>();
+            for(String guid:guids){
+                results.put(guid, getNamesForGuids(guid));
+            }
+            return results;
+        } else{
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to perform a bulklookup without a list of guids");
+            return null;
         }
-        return results;
     }
     
 
