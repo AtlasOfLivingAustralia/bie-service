@@ -1,20 +1,9 @@
 package org.ala.web.admin.dao.Impl;
 
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import javax.inject.Inject;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
 import org.ala.dao.IndexedTypes;
 import org.ala.dao.SolrUtils;
 import org.ala.util.ReadOnlyLock;
+import org.ala.util.WebUtils;
 import org.ala.web.admin.dao.CollectionDao;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -35,8 +24,14 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import javax.inject.Inject;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.InputStream;
+import java.util.*;
+
 @Component("collectionDao")
-public class CollectionDaoImpl implements CollectionDao{
+public class CollectionDaoImpl implements CollectionDao {
     protected String collectoryUriPrefix = "http://collections.ala.org.au";
     protected String baseUrlForCollectory = "http://collections.ala.org.au/public/show/";
 
@@ -57,8 +52,10 @@ public class CollectionDaoImpl implements CollectionDao{
     
     public CollectionDaoImpl(){}
     
-    private Object callCollectionsWs(String jsonUri, Class clazz){
-		return restTemplate.getForObject(jsonUri, clazz);
+    private Object callJsonWs(String jsonUri, Class clazz) throws Exception {
+        String json = WebUtils.getUrlContentAsString(jsonUri);
+        ObjectMapper om = new ObjectMapper();
+        return om.readValue(json, clazz);
 	}
     
     private String listToString(Object list){
@@ -197,14 +194,14 @@ public class CollectionDaoImpl implements CollectionDao{
 					solrServer.deleteByQuery("idxtype:"+IndexedTypes.COLLECTION);
 					solrServer.commit();
 					
-			    	List<Map> list = (List<Map>) callCollectionsWs(collectoryUriPrefix + "/ws/collection.json", java.util.List.class);
+			    	List<Map> list = (List<Map>) callJsonWs(collectoryUriPrefix + "/ws/collection.json", java.util.List.class);
 			    	Iterator<Map> it = list.iterator();
 			    	while (it.hasNext()){
 			    		try{
 			    			ctr++;
 				    		Map<String, String> map = it.next();
 				    		String uri = map.get("uri");
-				    		DynaBean dyna = (DynaBean) callCollectionsWs(uri, DynaBean.class);
+				    		DynaBean dyna = (DynaBean) callJsonWs(uri, DynaBean.class);
 				    		String uid = dyna.uid;
 				    		String name = dyna.name;					    		
 				    		String acronym = (String)(dyna.other.get("acronym") != null?dyna.other.get("acronym"):"");					    		
@@ -235,9 +232,8 @@ public class CollectionDaoImpl implements CollectionDao{
 							doc.addField("australian_s", "recorded"); // so they appear in default QF search
 				
 							solrServer.add(doc);
-			    		}
-			    		catch(Exception e){
-			    			logger.error(e);
+			    		} catch(Exception e){
+			    			logger.error(e.getMessage(), e);
 			    		}
 			    	}    	
 			    	solrServer.commit();
@@ -274,14 +270,21 @@ public class CollectionDaoImpl implements CollectionDao{
 					solrServer.deleteByQuery("idxtype:"+IndexedTypes.INSTITUTION); // delete institutions!
 					solrServer.commit();
 					
-			    	List<Map> list = (List<Map>) callCollectionsWs(collectoryUriPrefix + "/ws/institution.json", java.util.List.class);
+			    	List<Map> list = (List<Map>) callJsonWs(collectoryUriPrefix + "/ws/institution.json", java.util.List.class);
 			    	Iterator<Map> it = list.iterator();
 			    	while (it.hasNext()){
 			    		try{
 			    			ctr++;
 				    		Map<String, String> map = it.next();
 				    		String uri = map.get("uri");
-				    		DynaBean dyna = (DynaBean) callCollectionsWs(uri, DynaBean.class);
+                            logger.debug("Calling : " + uri);
+
+                            //System.out.println(WebUtils.getUrlContentAsString(uri));
+                            String json = WebUtils.getUrlContentAsString(uri);
+                            ObjectMapper om = new ObjectMapper();
+                            om.readValue(json, DynaBean.class);
+//				    		DynaBean dyna = (DynaBean) callJsonWs(uri, DynaBean.class);
+                            DynaBean dyna = (DynaBean) om.readValue(json, DynaBean.class);
 				    		String uid = dyna.uid;
 				    		String name = dyna.name;					    		
 				    		String acronym = (String)(dyna.other.get("acronym") != null?dyna.other.get("acronym"):"");					    		
@@ -306,21 +309,18 @@ public class CollectionDaoImpl implements CollectionDao{
 							doc.addField("australian_s", "recorded"); // so they appear in default QF search
 							doc.addField("idxtype", IndexedTypes.INSTITUTION);
 							solrServer.add(doc);																
-			    		}
-			    		catch(Exception e){
-			    			logger.error(e);
+			    		} catch(Exception e){
+			    			logger.error(e.getMessage(), e);
 			    		}
 			    	}    	
 			    	solrServer.commit();
 					completed = true;
 				}
-			}
-			else{
+			} else {
 				logger.info("**** isReadOnly: " + ReadOnlyLock.getInstance().isReadOnly());
 			}
 			logger.info("reloadInstitutions in (sec): "+((Calendar.getInstance().getTimeInMillis() - ticket.getTimeInMillis())/1000) + " , ctr = " + ctr);			
-		}
-		finally{
+		} finally {
 			if(ReadOnlyLock.getInstance().isReadOnly()){
 				ReadOnlyLock.getInstance().setUnlock(ticket);
 				logger.info("**** setUnlock-isReadOnly: " + ReadOnlyLock.getInstance().isReadOnly());
@@ -345,14 +345,14 @@ public class CollectionDaoImpl implements CollectionDao{
 					solrServer.deleteByQuery("idxtype:"+IndexedTypes.DATAPROVIDER);
 					solrServer.commit();
 					
-			    	List<Map> list = (List<Map>) callCollectionsWs(collectoryUriPrefix + "/ws/dataProvider.json", java.util.List.class);
+			    	List<Map> list = (List<Map>) callJsonWs(collectoryUriPrefix + "/ws/dataProvider.json", java.util.List.class);
 			    	Iterator<Map> it = list.iterator();
 			    	while (it.hasNext()){
 			    		try{
 			    			ctr++;
 				    		Map<String, String> map = it.next();
 				    		String uri = map.get("uri");
-				    		DynaBean dyna = (DynaBean) callCollectionsWs(uri, DynaBean.class);
+				    		DynaBean dyna = (DynaBean) callJsonWs(uri, DynaBean.class);
 				    		String uid = dyna.uid;
 				    		String name = dyna.name;					    		
 				    		String description = (String)(dyna.other.get("pubDescription") != null?dyna.other.get("pubDescription"):"");
@@ -369,7 +369,7 @@ public class CollectionDaoImpl implements CollectionDao{
 							solrServer.add(doc);									
 			    		}
 			    		catch(Exception e){
-			    			logger.error(e);
+			    			logger.error(e.getMessage(), e);
 			    		}
 			    	}    	
 			    	solrServer.commit();
@@ -406,14 +406,14 @@ public class CollectionDaoImpl implements CollectionDao{
 					solrServer.deleteByQuery("idxtype:"+IndexedTypes.DATASET);
 					solrServer.commit();
 					
-			    	List<Map> list = (List<Map>) callCollectionsWs(collectoryUriPrefix + "/ws/dataResource.json", java.util.List.class);
+			    	List<Map> list = (List<Map>) callJsonWs(collectoryUriPrefix + "/ws/dataResource.json", java.util.List.class);
 			    	Iterator<Map> it = list.iterator();
 			    	while (it.hasNext()){
 			    		try{
 			    			ctr++;
 				    		Map<String, String> map = it.next();
 				    		String uri = map.get("uri");
-				    		DynaBean dyna = (DynaBean) callCollectionsWs(uri, DynaBean.class);
+				    		DynaBean dyna = (DynaBean) callJsonWs(uri, DynaBean.class);
 				    		String uid = dyna.uid;
 				    		String name = dyna.name;					    		
 				    		String acronym = (String)(dyna.other.get("acronym") != null?dyna.other.get("acronym"):"");					    		
@@ -443,9 +443,8 @@ public class CollectionDaoImpl implements CollectionDao{
 							doc.addField("australian_s", "recorded"); // so they appear in default QF search
 							doc.addField("idxtype", IndexedTypes.DATASET);
 							solrServer.add(doc);									
-			    		}
-			    		catch(Exception e){
-			    			logger.error(e);
+			    		} catch(Exception e){
+			    			logger.error(e.getMessage(), e);
 			    		}
 			    	}    	
 			    	solrServer.commit();
