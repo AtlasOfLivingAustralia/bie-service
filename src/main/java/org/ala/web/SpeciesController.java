@@ -524,7 +524,7 @@ public class SpeciesController {
     public SearchDTO[] bulkImageLookup(HttpServletRequest request, HttpServletResponse response) throws Exception {
         ObjectMapper om = new ObjectMapper();
         InputStream is = request.getInputStream();
-        if(is.available()>0){
+        if(request.getContentLength()>0){
             try{
             String[] guids = om.readValue(is, (new String[0]).getClass());
             
