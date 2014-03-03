@@ -512,8 +512,67 @@ public class SpeciesController {
             return null;
         }
     }
-
-
+    /**
+     * Performs a bulk species lookup by providing list of species in a JSON map with a key "names"
+     * @param request
+     * @param response
+     * @return
+     * @throws Exception
+     */
+    @RequestMapping(value = {"/species/lookup/bulk","/ws/species/lookup/bulk"}, method = RequestMethod.POST)
+    @ResponseBody public SearchDTO[] bulkSpeciesLookup(HttpServletRequest request, HttpServletResponse response) throws Exception{
+        //input stream should be a JSON map of values with a mandatory value for names
+        ObjectMapper om = new ObjectMapper();
+        Map<String,String> map = new HashMap<String,String>();
+        if(request.getContentLength()>0){
+            try{
+                map = om.readValue(request.getInputStream(),new TypeReference<HashMap<String,String>>(){});
+                if(map.containsKey("names")){
+                    boolean handleNulls =true;
+                    //extract the guids
+                    String[] guids = om.readValue(map.get("names").toString(), (new String[0]).getClass());
+                    return performSpeciesBulklookup(guids, handleNulls);
+                } else{
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to perform a bulklookup without a list of names");
+                    return null;
+                }
+            } catch (Exception e){
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Format of input incorrect: " + e.getMessage());
+                return null;
+            }
+        } else {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to perform a bulklookup without request data");
+            return null; 
+        }
+    }
+    /**
+     * Common code to perform the species bulklookup for the new and deprecated webservice.
+     * @param guids
+     * @param handleNulls
+     * @return
+     * @throws Exception
+     */
+    private SearchDTO[] performSpeciesBulklookup(String guids[], boolean handleNulls) throws Exception{
+        List<SearchDTO> resultSet = new ArrayList<SearchDTO>();
+        for(int i=0; i< guids.length; i++){
+            //Need to sort the scores descended to get the highest score first
+            SearchResultsDTO<SearchDTO> results = searchDao.doExactTextSearch(guids[i], null, 0, 1, "score", "desc"); 
+            //if there is no exact scientific name attempt to find by name.
+            if(results.getResults().isEmpty()){
+                results = searchDao.findByName(IndexedTypes.TAXON, guids[i], null, 0, 1, "score", "desc");
+                
+            }
+            if(results.getTotalRecords() > 0){
+                repoUrlUtils.fixRepoUrls(results);
+                resultSet.addAll(results.getResults());
+            } else if(handleNulls){
+                resultSet.add(null);
+            }
+        }
+        return resultSet.toArray(new SearchDTO[0]);
+        
+    }
+    
     /**
      * TODO Replace this with a more efficient query mechanism.
      * 
@@ -521,7 +580,7 @@ public class SpeciesController {
      * @return
      * @throws Exception
      * @deprecated Due to the fact that there is no way to align the results to the requested name because name not 
-     * found are not included. Use {@link #bulkImageLookupWithJson()} instead
+     * found are not included. Use {@link #bulkSpeciesLookup()} instead
      */
     @Deprecated
     @RequestMapping(value = {"/species/bulklookup.json","/ws/species/bulklookup.json"}, method = RequestMethod.POST)
@@ -530,23 +589,9 @@ public class SpeciesController {
         InputStream is = request.getInputStream();
         if(request.getContentLength()>0){
             try{
-            String[] guids = om.readValue(is, (new String[0]).getClass());
-            
-            List<SearchDTO> resultSet = new ArrayList<SearchDTO>();
-            for(int i=0; i< guids.length; i++){
-                //Need to sort the scores descended to get the highest score first
-                SearchResultsDTO<SearchDTO> results = searchDao.doExactTextSearch(guids[i], null, 0, 1, "score", "desc"); 
-                //if there is no exact scientific name attempt to find by name.
-                if(results.getResults().isEmpty()){
-                    results = searchDao.findByName(IndexedTypes.TAXON, guids[i], null, 0, 1, "score", "desc");
-                    
-                }
-                if(results.getTotalRecords() > 0){
-                    repoUrlUtils.fixRepoUrls(results);
-                    resultSet.addAll(results.getResults());
-                }
-            }
-            return resultSet.toArray(new SearchDTO[0]);
+                String[] guids = om.readValue(is, (new String[0]).getClass());
+                return performSpeciesBulklookup(guids, false);
+
             } catch (Exception e){
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Format of input incorrect: " + e.getMessage());
                 return null;
