@@ -513,13 +513,17 @@ public class SpeciesController {
         }
     }
 
+
     /**
      * TODO Replace this with a more efficient query mechanism.
      * 
      * @param request
      * @return
      * @throws Exception
+     * @deprecated Due to the fact that there is no way to align the results to the requested name because name not 
+     * found are not included. Use {@link #bulkImageLookupWithJson()} instead
      */
+    @Deprecated
     @RequestMapping(value = {"/species/bulklookup.json","/ws/species/bulklookup.json"}, method = RequestMethod.POST)
     public SearchDTO[] bulkImageLookup(HttpServletRequest request, HttpServletResponse response) throws Exception {
         ObjectMapper om = new ObjectMapper();
@@ -563,7 +567,7 @@ public class SpeciesController {
     public SearchDTO[] bulkImageLookupBasedOnGuids(HttpServletRequest request, HttpServletResponse response) throws Exception {
         ObjectMapper om = new ObjectMapper();
         InputStream is = request.getInputStream();
-        if(is.available()>0){
+        if(request.getContentLength()>0){
             String[] guids = om.readValue(is, (new String[0]).getClass());
             SearchDTO[] results= searchDao.findByGuids(guids).getResults().toArray(new SearchDTO[]{});
             repoUrlUtils.fixRepoUrls(results);
@@ -1031,7 +1035,7 @@ public class SpeciesController {
     public @ResponseBody Map<String,List<Map<String, String>>> getAllNamesForGuids(HttpServletRequest request, HttpServletResponse response) throws Exception {
         ObjectMapper om = new ObjectMapper();
         InputStream is = request.getInputStream();
-        if(is.available()>0){
+        if(request.getContentLength()>0){
             String[] guids = om.readValue(is, (new String[0]).getClass());
             Map<String,List<Map<String, String>>> results = new HashMap<String,List<Map<String, String>>>();
             for(String guid:guids){
