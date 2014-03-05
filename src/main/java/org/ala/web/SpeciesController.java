@@ -523,15 +523,15 @@ public class SpeciesController {
     @ResponseBody public SearchDTO[] bulkSpeciesLookup(HttpServletRequest request, HttpServletResponse response) throws Exception{
         //input stream should be a JSON map of values with a mandatory value for names
         ObjectMapper om = new ObjectMapper();
-        Map<String,String> map = new HashMap<String,String>();
+        Map<String,Object> map = new HashMap<String,Object>();
         if(request.getContentLength()>0){
             try{
-                map = om.readValue(request.getInputStream(),new TypeReference<HashMap<String,String>>(){});
+                map = om.readValue(request.getInputStream(),new TypeReference<HashMap<String,Object>>(){});
                 if(map.containsKey("names")){
                     boolean handleNulls =true;
                     //extract the guids
-                    String[] guids = om.readValue(map.get("names").toString(), (new String[0]).getClass());
-                    return performSpeciesBulklookup(guids, handleNulls);
+                    String[] guids = ((List<String>)map.get("names")).toArray(new String[]{});
+                    return performSpeciesBulklookup(guids, handleNulls,false);
                 } else{
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to perform a bulklookup without a list of names");
                     return null;
@@ -547,18 +547,20 @@ public class SpeciesController {
     }
     /**
      * Common code to perform the species bulklookup for the new and deprecated webservice.
-     * @param guids
-     * @param handleNulls
+     * @param guids array of names to lookup
+     * @param handleNulls when true a null value will be inserted for the names that are not found
+     * @parma relaxedSearch when true will perform a "findByName" search which may include results that are close to the required value
      * @return
      * @throws Exception
      */
-    private SearchDTO[] performSpeciesBulklookup(String guids[], boolean handleNulls) throws Exception{
+    private SearchDTO[] performSpeciesBulklookup(String guids[], boolean handleNulls,boolean relaxedSearch) throws Exception{
         List<SearchDTO> resultSet = new ArrayList<SearchDTO>();
         for(int i=0; i< guids.length; i++){
             //Need to sort the scores descended to get the highest score first
-            SearchResultsDTO<SearchDTO> results = searchDao.doExactTextSearch(guids[i], null, 0, 1, "score", "desc"); 
+            SearchResultsDTO results = searchDao.findByScientificName(guids[i], null, 0, 1, "score", "desc", true);
+
             //if there is no exact scientific name attempt to find by name.
-            if(results.getResults().isEmpty()){
+            if(results.getResults().isEmpty() && relaxedSearch){
                 results = searchDao.findByName(IndexedTypes.TAXON, guids[i], null, 0, 1, "score", "desc");
                 
             }
@@ -590,7 +592,7 @@ public class SpeciesController {
         if(request.getContentLength()>0){
             try{
                 String[] guids = om.readValue(is, (new String[0]).getClass());
-                return performSpeciesBulklookup(guids, false);
+                return performSpeciesBulklookup(guids, false, true);
 
             } catch (Exception e){
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Format of input incorrect: " + e.getMessage());
