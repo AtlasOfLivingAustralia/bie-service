@@ -17,6 +17,7 @@ package org.ala.web;
 import java.io.*;
 import java.text.BreakIterator;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -48,7 +49,6 @@ import org.ala.dto.ExtendedTaxonConceptDTO;
 import org.ala.dto.SearchDTO;
 import org.ala.dto.SearchResultsDTO;
 import org.ala.dto.SearchTaxonConceptDTO;
-import org.ala.model.AttributableObject;
 import org.ala.model.*;
 import org.ala.repository.Predicates;
 import org.ala.util.ImageUtils;
@@ -616,13 +616,40 @@ public class SpeciesController {
         InputStream is = request.getInputStream();
         if(request.getContentLength()>0){
             String[] guids = om.readValue(is, (new String[0]).getClass());
-            SearchDTO[] results= searchDao.findByGuids(guids).getResults().toArray(new SearchDTO[]{});
+            SearchDTO[] results= reorder(searchDao.findByGuids(guids).getResults(), guids).toArray(new SearchDTO[]{});
             repoUrlUtils.fixRepoUrls(results);
             return results;
         } else{
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to perform a bulklookup without a list of guids");
             return null;
         }
+    }
+    /**
+     * Method to reorder the results into the same order that the guid was supplied. It will ensure that a null values is 
+     * supplied when no results can be located.
+     * @param list
+     * @param guids
+     * @return
+     * @throws Exception
+     */
+    private List<SearchDTO> reorder(List<SearchDTO> list, String[] guids) throws Exception{
+        
+        ArrayList<SearchDTO> newList = new ArrayList<SearchDTO>();
+        for(int i=0;i<list.size();i++){
+           newList.add(null); 
+        }
+        List<String>lguids = Arrays.asList(guids);
+        logger.debug("results: " + list.size() + " guids: " + guids.length + " listguids: " +lguids.size());
+        for(SearchDTO dto : list){
+            int index = lguids.indexOf(dto.getGuid());
+            if(index>=0){
+                newList.remove(index); //remove the null value
+                newList.add(index,dto); //add the correct value                
+            } else{
+                logger.info("Unable to locate " + dto.getGuid() + " returning null value");
+            }
+        }
+        return newList;
     }
 
     /**
