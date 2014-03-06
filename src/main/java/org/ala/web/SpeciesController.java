@@ -635,7 +635,7 @@ public class SpeciesController {
     private List<SearchDTO> reorder(List<SearchDTO> list, String[] guids) throws Exception{
         
         ArrayList<SearchDTO> newList = new ArrayList<SearchDTO>();
-        for(int i=0;i<list.size();i++){
+        for(int i=0;i<guids.length;i++){
            newList.add(null); 
         }
         List<String>lguids = Arrays.asList(guids);
