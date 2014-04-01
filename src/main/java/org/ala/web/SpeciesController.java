@@ -529,9 +529,10 @@ public class SpeciesController {
                 map = om.readValue(request.getInputStream(),new TypeReference<HashMap<String,Object>>(){});
                 if(map.containsKey("names")){
                     boolean handleNulls =true;
+                    boolean includeVernacular = map.containsKey("vernacular")?(Boolean)map.get("vernacular"):false;
                     //extract the guids
                     String[] guids = ((List<String>)map.get("names")).toArray(new String[]{});
-                    return performSpeciesBulklookup(guids, handleNulls,false);
+                    return performSpeciesBulklookup(guids, handleNulls,false, includeVernacular);
                 } else{
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unable to perform a bulklookup without a list of names");
                     return null;
@@ -553,11 +554,11 @@ public class SpeciesController {
      * @return
      * @throws Exception
      */
-    private SearchDTO[] performSpeciesBulklookup(String guids[], boolean handleNulls,boolean relaxedSearch) throws Exception{
+    private SearchDTO[] performSpeciesBulklookup(String guids[], boolean handleNulls,boolean relaxedSearch, boolean includeVernacular) throws Exception{
         List<SearchDTO> resultSet = new ArrayList<SearchDTO>();
         for(int i=0; i< guids.length; i++){
             //Need to sort the scores descended to get the highest score first
-            SearchResultsDTO results = searchDao.findByScientificName(guids[i], null, 0, 1, "score", "desc", true);
+            SearchResultsDTO results = searchDao.findByScientificName(guids[i], null, 0, 1, "score", "desc", true, includeVernacular);
 
             //if there is no exact scientific name attempt to find by name.
             if(results.getResults().isEmpty() && relaxedSearch){
@@ -592,7 +593,7 @@ public class SpeciesController {
         if(request.getContentLength()>0){
             try{
                 String[] guids = om.readValue(is, (new String[0]).getClass());
-                return performSpeciesBulklookup(guids, false, true);
+                return performSpeciesBulklookup(guids, false, true, true);
 
             } catch (Exception e){
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Format of input incorrect: " + e.getMessage());
