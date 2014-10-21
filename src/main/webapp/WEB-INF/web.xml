@@ -90,7 +90,7 @@
 
     <context-param>
         <param-name>authenticateOnlyIfLoggedInFilterPattern</param-name>
-        <param-value>/species/.*</param-value>
+        <param-value></param-value>
     </context-param>
 
     <!-- CAS Authentication Service filters -->
