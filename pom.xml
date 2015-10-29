@@ -11,7 +11,7 @@
     <groupId>au.org.ala</groupId>
     <artifactId>bie-service</artifactId>
     <packaging>war</packaging>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.2-SNAPSHOT</version>
     <name>bie-service</name>
     <url>http://www.ala.org.au</url>
     <description>
@@ -42,7 +42,7 @@
         <dependency>
             <groupId>au.org.ala</groupId>
             <artifactId>bie-profile</artifactId>
-            <version>1.1-SNAPSHOT</version>
+            <version>1.2-SNAPSHOT</version>
             <exclusions>
                 <exclusion>
                     <artifactId>guava</artifactId>
