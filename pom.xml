@@ -75,6 +75,12 @@
             <groupId>au.org.ala</groupId>
             <artifactId>ala-name-matching</artifactId>
             <version>1.3</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>lucene-analyzers</artifactId>
+                    <groupId>org.apache.lucene</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- ALA common UI -->
